@@ -222,7 +222,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
     <input class="search" id="q" type="search" placeholder="Buscar cliente, produto ou grupo" aria-label="Buscar">
     <span class="spacer"></span>
     <div class="seg" id="roles" role="group" aria-label="Perfil" hidden>
-      <button data-r="comercial" aria-pressed="true">Comercial</button>
+      <button data-r="tudo" aria-pressed="true">Tudo</button>
+      <button data-r="comercial" aria-pressed="false">Comercial</button>
       <button data-r="producao" aria-pressed="false">Produção</button>
     </div>
     <span class="role" id="rolelabel"></span>
@@ -258,7 +259,7 @@ const EMPRESA = "Marconi Confecção";
 const PEDIDO_TEXTOS = ["grupo","cliente","grade","cores","etapa","amostra","endereco","pilotoProd","pilotoAprov","prazo","obs","feedback","lembrete"];
 const LEMBRETE_DIAS = 10;
 const OPCOES_RETORNO = [10,18];
-const PAPEIS = {comercial:"Comercial (vê tudo)",producao:"Produção (sem valores)",leitura:"Somente leitura"};
+const PAPEIS = {comercial:"Comercial (produtos e preços, sem custos)",producao:"Produção (custos, sem valores de venda)",leitura:"Somente leitura"};
 const brl = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
 const num = new Intl.NumberFormat("pt-BR");
 
@@ -333,7 +334,7 @@ function mapearPlanilha(rows){
   const col=p=>H.findIndex(h=>h.startsWith(p));
   const ix={grupo:col("numero"),produto:col("produto"),tecido:col("composicao"),cliente:col("cliente"),grade:col("grade"),cores:col("cores"),
     qtde:col("qtde"),preco:col("preco"),amostra:col("status amostra"),endereco:col("endereco"),pp:col("status producao"),pa:col("status aprovacao"),
-    total:col("valor total"),pag:col("pagamento"),com:col("comissao")};
+    total:col("valor total"),pag:col("pagamento")};
   const g=(r,k)=>ix[k]>=0?String(r[ix[k]]??"").replace(/\s+/g," ").trim():"";
   const out=[];
   rows.slice(1).forEach((r,n)=>{
@@ -360,7 +361,7 @@ function mapearPlanilha(rows){
       id:"imp"+String(n+1).padStart(3,"0"),
       pedido:{grupo,cliente,produto,tecido,grade:g(r,"grade"),cores:g(r,"cores"),qtde,etapa,amostra,endereco:g(r,"endereco"),
         pilotoProd:g(r,"pp"),pilotoAprov:g(r,"pa"),prazo:"",obs:obs.join(" · "),feedback:"",entradaOk:pago>0},
-      fin:{preco,precoTxt:/^R\$\s*[\d.,]+$/i.test(precoTxt)?"":precoTxt,valorTotal,pago,pagamentoTxt,comissao:parseBR(g(r,"com"))}
+      fin:{preco,precoTxt:/^R\$\s*[\d.,]+$/i.test(precoTxt)?"":precoTxt,valorTotal,pago,pagamentoTxt}
     });
   });
   return out;
@@ -432,7 +433,7 @@ async function abrirArquivo(bucket,path){
 
 /* ---------- estado ---------- */
 const S={store:null,pedidos:new Map(),fin:new Map(),carregado:false,view:"quadro",q:"",
-  papel:"leitura",podeComercial:false,perfil:"producao",podeEditar:false,userId:null,email:"",aberto:null,
+  papel:"leitura",ehAdmin:false,podeFin:false,podeCustos:false,perfil:"producao",podeEditar:false,userId:null,email:"",aberto:null,
   alertas:new Map(),alertaDe:null,custos:new Map()};
 const finDe=id=>S.fin.get(id)||{};
 const totalDe=(p,f)=>f.valorTotal??((p.qtde&&f.preco)?round2(p.qtde*f.preco):null);
@@ -451,7 +452,13 @@ const faltaDefinir=p=>{
   if(Array.isArray(p.itens)&&p.itens.some(temQtd)) return false;
   return !p.grade||!p.cores||/defin?ir|defnir/i.test(p.grade+" "+p.cores);
 };
-const comercial=()=>S.perfil==="comercial";
+/* O que cada visão mostra:
+   tudo (só o administrador): pedidos, preços, pagamentos, custos e margem
+   comercial: pedidos, preços de venda, pagamentos, CNPJ; NUNCA custos nem margem
+   producao: pedidos e custos; nunca preços de venda, pagamentos nem CNPJ */
+const comercial=()=>S.perfil!=="producao";   // enxerga a parte financeira (venda)
+const verCustos=()=>S.podeCustos&&(S.perfil==="tudo"||S.perfil==="producao");
+const verMargem=()=>S.ehAdmin&&S.perfil==="tudo";
 const emAndamento=p=>p.etapa!=="entrega"&&p.etapa!=="feedback";
 
 /* ---------- produtos, matrizes e preços ---------- */
@@ -566,7 +573,7 @@ function lista(){
 function chipsDe(p){
   const f=finDe(p.id),c=[];
   if(p.etapa==="feedback") c.push(timerChip(p));
-  if(p.etapa==="producao"&&S.podeEditar){const ct=custoDe(S.custos.get(p.id));c.push(ct>0?`<span class="chip">Custos ${money(ct)}</span>`:`<span class="chip warn">Sem custos lançados</span>`)}
+  if(p.etapa==="producao"&&verCustos()){const ct=custoDe(S.custos.get(p.id));c.push(ct>0?`<span class="chip">Custos ${money(ct)}</span>`:`<span class="chip warn">Sem custos lançados</span>`)}
   if(p.etapa!=="cotacao"&&emAndamento(p)){
     c.push(p.entradaOk?`<span class="chip ok">Entrada confirmada</span>`:`<span class="chip warn">Aguardando entrada 50%</span>`);
     if(p.entradaOk&&!p.prazo) c.push(`<span class="chip bad">Definir prazo</span>`);
@@ -596,12 +603,12 @@ function viewQuadro(){
 function viewTabela(){
   const L=lista(),c=comercial();
   return `<div class="tablebox"><table><thead><tr><th>Grupo</th><th>Cliente</th><th>Produto</th><th class="n">Qtde</th><th>Etapa</th><th>Amostra</th><th>Prazo</th>
-    ${c?`<th class="n">Valor</th><th class="n">Recebido</th><th>Pagamento</th><th class="n">Comissão</th>`:`<th>Piloto</th>`}</tr></thead><tbody>
+    ${c?`<th class="n">Valor</th><th class="n">Recebido</th><th>Pagamento</th>`:`<th>Piloto</th>`}</tr></thead><tbody>
     ${L.map(p=>{const f=finDe(p.id),e=ETAPAS.find(x=>x.id===p.etapa);
       return `<tr data-open="${esc(p.id)}"><td class="g">${esc(p.grupo)}</td><td>${esc(p.cliente)}</td><td>${esc(p.produto)}</td>
       <td class="n">${p.qtde?num.format(p.qtde):"—"}</td><td><span class="chip" style="color:${e?.cor}">${e?.nome||""}</span></td>
       <td>${esc(p.amostra)||"—"}</td><td>${p.prazo?esc(p.prazo.split("-").reverse().join("/")):"—"}</td>
-      ${c?`<td class="n">${money(totalDe(p,f))}</td><td class="n">${money(f.pago||0)}</td><td><span class="chip ${statusPagto(p,f).c}">${statusPagto(p,f).t}</span></td><td class="n">${money(f.comissao??null)}</td>`
+      ${c?`<td class="n">${money(totalDe(p,f))}</td><td class="n">${money(f.pago||0)}</td><td><span class="chip ${statusPagto(p,f).c}">${statusPagto(p,f).t}</span></td>`
          :`<td>${esc(p.pilotoProd||p.pilotoAprov)||"—"}</td>`}</tr>`}).join("")}
     </tbody></table></div>${L.length?"":`<div class="empty">Nenhum pedido encontrado.</div>`}`;
 }
@@ -613,11 +620,14 @@ function viewResumo(){
   if(c){
     const A=L.filter(p=>p.etapa!=="cotacao"), cot=L.filter(p=>p.etapa==="cotacao");
     const tot=A.reduce((a,p)=>a+(totalDe(p,finDe(p.id))||0),0), rec=A.reduce((a,p)=>a+(finDe(p.id).pago||0),0);
-    const com=A.reduce((a,p)=>a+(finDe(p.id).comissao||0),0);
     const emCot=cot.reduce((a,p)=>a+(totalDe(p,finDe(p.id))||0),0);
-    const comCusto=A.filter(p=>custoDe(S.custos.get(p.id))>0);
-    const mg=comCusto.reduce((a,p)=>a+(totalDe(p,finDe(p.id))||0)-custoDe(S.custos.get(p.id)),0);
-    kpis=[[money(tot),"em carteira (aprovados)"],[money(rec),"recebido"],[money(Math.max(0,tot-rec)),"a receber"],[money(com),"comissão prevista"],[money(emCot),`em cotação (${cot.length})`],[money(mg),`margem em ${comCusto.length} pedido${comCusto.length===1?"":"s"} com custo lançado`]]
+    const kp=[[money(tot),"em carteira (aprovados)"],[money(rec),"recebido"],[money(Math.max(0,tot-rec)),"a receber"],[money(emCot),`em cotação (${cot.length})`]];
+    if(verMargem()){   // margem: somente o administrador
+      const comCusto=A.filter(p=>custoDe(S.custos.get(p.id))>0);
+      const mg=comCusto.reduce((a,p)=>a+(totalDe(p,finDe(p.id))||0)-custoDe(S.custos.get(p.id)),0);
+      kp.push([money(mg),`margem em ${comCusto.length} pedido${comCusto.length===1?"":"s"} com custo lançado`]);
+    }
+    kpis=kp
       .map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
   }else{
     const prod=L.filter(p=>p.etapa==="producao");
@@ -629,7 +639,7 @@ function viewResumo(){
   L.filter(atrasado).forEach(p=>aten.push([p,"Prazo vencido"]));
   L.filter(p=>p.entradaOk&&!p.prazo&&emAndamento(p)&&p.etapa!=="cotacao").forEach(p=>aten.push([p,"Entrada confirmada: definir prazo"]));
   L.filter(p=>p.etapa==="producao"&&!p.entradaOk).forEach(p=>aten.push([p,"Em produção sem entrada confirmada"]));
-  if(S.podeEditar) L.filter(p=>p.etapa==="producao"&&!(custoDe(S.custos.get(p.id))>0)).forEach(p=>aten.push([p,"Em produção sem custos lançados"]));
+  if(verCustos()) L.filter(p=>p.etapa==="producao"&&!(custoDe(S.custos.get(p.id))>0)).forEach(p=>aten.push([p,"Em produção sem custos lançados"]));
   L.filter(p=>emAndamento(p)&&p.etapa!=="cotacao"&&faltaDefinir(p)).forEach(p=>aten.push([p,"Falta definir grade/cores"]));
   L.filter(p=>p.amostra==="Enviada").forEach(p=>aten.push([p,"Amostra enviada, sem retorno"]));
   if(c) L.filter(p=>p.etapa==="producao"&&statusPagto(p,finDe(p.id)).c!=="ok").forEach(p=>aten.push([p,"Em produção com saldo a receber"]));
@@ -643,12 +653,12 @@ function viewVazio(){
   if(!S.podeEditar) return `<div class="hero"><h2>Nenhum pedido ainda</h2><p>Quando houver pedidos cadastrados eles aparecem aqui.</p></div>`;
   return `<div class="hero"><h2>Comece importando a planilha</h2>
     <p>Na planilha, abra a aba <b>PRODUÇÃO E GRUPOS</b> e use Arquivo → Baixar → Valores separados por vírgula (.csv). Depois escolha o arquivo aqui. Cada linha vira um pedido; valores e pagamentos vão para a área restrita ao Comercial. Também dá para começar direto pelo botão “Novo pedido”.</p>
-    ${S.podeComercial?`<input type="file" id="csv" accept=".csv,text/csv" aria-label="Arquivo CSV da planilha"><div id="prev" class="note" style="margin-top:12px"></div>`
+    ${S.ehAdmin?`<input type="file" id="csv" accept=".csv,text/csv" aria-label="Arquivo CSV da planilha"><div id="prev" class="note" style="margin-top:12px"></div>`
       :`<p class="note">Só o Comercial pode importar.</p>`}</div>`;
 }
 function render(){
   const app=$("#app");
-  $("#rolelabel").textContent=S.papel==="comercial"?"":(S.papel==="producao"?"Visão da Produção":"Somente leitura");
+  $("#rolelabel").textContent=S.papel==="admin"?"":(S.papel==="comercial"?"Comercial":(S.papel==="producao"?"Produção":"Somente leitura"));
   document.querySelectorAll("#views button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===S.view));
   document.querySelectorAll("#roles button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===S.perfil));
   $("#novo").disabled=!S.podeEditar;
@@ -698,7 +708,7 @@ function htmlCustos(C){
   return `<div class="sec">Custos de produção</div>
     <div class="custos">${grupos}</div>
     <div class="calc"><div><span>Total de custos</span><b id="cTotal">—</b></div><div><span>Custo por peça</span><b id="cPeca">—</b></div>
-      ${comercial()?`<div><span>Margem (venda menos custos)</span><b id="cMargem">—</b></div>`:""}</div>
+      ${verMargem()?`<div><span>Margem (venda menos custos)</span><b id="cMargem">—</b></div>`:""}</div>
     ${campo("custoObs","Observações dos custos",C.obs??"",{full:1,area:1})}
     ${htmlMini(C)}`;
 }
@@ -779,13 +789,13 @@ function abrir(id){
       <div class="sec">Produtos, cores e tamanhos</div>
       <div id="itens">${htmlItens()}</div>
       ${(p.grade||p.cores)?`${campo("grade","Grade (anotação da planilha)",p.grade??"",{full:1,area:1})}${campo("cores","Cores (anotação da planilha)",p.cores??"",{full:1,area:1})}`:""}
-      ${c?`<div class="sec">Valores e pagamento (visível só ao Comercial)</div>
+      ${c?`<div class="sec">Valores e pagamento (a Produção não vê)</div>
       ${campo("valorTotal","Valor total do pedido (R$)",toBR(f.valorTotal??(temQ?calc.total:null)),{m:1,ro:temQ,hint:"Soma dos produtos. Cada cor pode ter valor próprio."})}
       ${campo("pago","Recebido até agora (R$)",toBR(f.pago),{m:1})}
       <div class="aviso" id="aviso" hidden>Há cores com quantidade e sem valor unitário. Preencha o valor padrão do produto ou o valor da cor.</div>
       <div class="calc"><div><span>Entrada de 50% para iniciar a produção</span><b id="entrada">${ent!=null?money(ent):"—"}</b></div>
         <div><span>Saldo restante (50%)</span><b id="saldo">${ent!=null?money(round2((f.valorTotal??total)-ent)):"—"}</b></div></div>
-      ${campo("comissao","Comissão (R$)",toBR(f.comissao),{m:1})}${campo("precoTxt","Observação de preço",f.precoTxt??"")}
+      ${campo("precoTxt","Observação de preço",f.precoTxt??"",{full:1})}
       ${campo("pagamentoTxt","Anotação de pagamento",f.pagamentoTxt??"",{full:1})}
       <div class="f full"><span class="lbl">Comprovante da entrada</span><div>${comp}</div>
         ${!novo?`<input type="file" id="comp" accept="image/*,application/pdf" aria-label="Anexar comprovante">`:`<span class="hint">Salve o pedido antes de anexar o comprovante.</span>`}</div>
@@ -795,7 +805,7 @@ function abrir(id){
       <div class="sec">Amostra e piloto</div>
       ${campo("amostra","Status da amostra",p.amostra??"",{sel:AMOSTRA})}${campo("pilotoProd","Produção do piloto",p.pilotoProd??"")}
       ${campo("endereco","Endereço para envio da amostra",p.endereco??"",{full:1})}${campo("pilotoAprov","Aprovação do piloto",p.pilotoAprov??"",{full:1})}
-      ${novo||!ed?"":htmlCustos(C)}
+      ${novo||!ed||!verCustos()?"":htmlCustos(C)}
       <div class="sec">Produção e próximo pedido</div>
       ${campo("obs","Observações da produção",p.obs??"",{full:1,area:1})}
       ${campo("feedback","Feedback do cliente (para programar o próximo pedido)",p.feedback??"",{full:1,area:1})}
@@ -806,7 +816,8 @@ function abrir(id){
     </fieldset></form>
     <footer>${ed?`<button class="btn primary" id="salvar">Salvar</button>`:""}
       ${!novo&&ed?`<button class="btn" id="alertar">Alertar o comercial</button>`:""}
-      ${!novo&&c&&ed?`<button class="btn" id="abrirEmail">E-mail ao cliente</button><button class="btn danger" id="excluir">Excluir pedido</button>`:""}</footer>
+      ${!novo&&c&&ed?`<button class="btn" id="abrirEmail">E-mail ao cliente</button>`:""}
+      ${!novo&&S.ehAdmin&&ed?`<button class="btn danger" id="excluir">Excluir pedido</button>`:""}</footer>
   </aside>`;
   atualizaTotais();syncDrawerTimer();recalcCustos();carregarMini(id);
   const av=$("#aviso");if(av)av.hidden=!(temQ&&calc.incompleto);
@@ -852,7 +863,7 @@ async function salvar(opt={}){
       });
       const vt=soma>0?calc.total:parseBR(g("valorTotal"));
       const f={precos,preco:precos[itens[0].id].base,valorTotal:vt,entrada:entradaDe(vt),precoTxt:g("precoTxt")||"",pago:parseBR(g("pago"))||0,
-        comissao:parseBR(g("comissao")),pagamentoTxt:g("pagamentoTxt")||"",razao:g("razao")||"",cnpj:cnpj||"",emailCliente:mail||""};
+        pagamentoTxt:g("pagamentoTxt")||"",razao:g("razao")||"",cnpj:cnpj||"",emailCliente:mail||""};
       if(S.fin.has(id)) await S.store.update("financeiro",id,f); else await S.store.set("financeiro",id,f);
       S.fin.set(id,{...(S.fin.get(id)||{}),...f});
     }
@@ -1075,7 +1086,7 @@ function renderStrip(){
 }
 function renderBell(){
   const b=$("#bell");if(!b)return;
-  b.hidden=!S.podeComercial;
+  b.hidden=!S.podeFin;
   const n=[...S.alertas.values()].filter(a=>!a.lido).length, bd=$("#badge");
   bd.hidden=!n;bd.textContent=n;
 }
@@ -1104,7 +1115,7 @@ async function enviarAlerta(){
   if(!p||!msg){statusModal("Escreva a mensagem do alerta.","bad");return}
   const b=$("#al-send");b.disabled=true;
   try{
-    await S.store.set("alertas",S.store.newId(),{pedidoId:id,grupo:p.grupo||"",cliente:p.cliente||"",msg,de:S.perfil==="comercial"?"comercial":"producao",em:Date.now(),lido:false});
+    await S.store.set("alertas",S.store.newId(),{pedidoId:id,grupo:p.grupo||"",cliente:p.cliente||"",msg,de:S.perfil==="producao"?"producao":"comercial",em:Date.now(),lido:false});
     await S.store.update("pedidos",id,{alertaEm:Date.now()});S.pedidos.set(id,{...p,alertaEm:Date.now()});
     statusModal("Alerta enviado ao comercial.","ok");render();
   }catch(e){b.disabled=false;statusModal("Não foi possível enviar o alerta: "+esc(msgErro(e)),"bad")}
@@ -1117,9 +1128,9 @@ async function abrirEquipe(){
   $("#modal").innerHTML=`<div class="modal"><div class="scrim" data-closemodal></div><div class="mbox" role="dialog" aria-modal="true" aria-label="Equipe">
     <header><h2>Equipe e acessos</h2><button class="btn" data-closemodal>Fechar</button></header>
     <div class="mbody">
-      <p class="note">Para convidar uma pessoa nova: no painel do Supabase, Authentication, Users, Invite user. Quando ela aceitar, aparece aqui como “Somente leitura” e você ajusta o perfil.</p>
+      <p class="note">Para incluir uma pessoa nova: no painel do Supabase, Authentication, Users, Add user. Ela aparece aqui desativada. Escolha o perfil e marque Ativo. Só você é Administrador (vê tudo, inclusive custos e margem).</p>
       ${data.map(u=>`<div class="eq" data-perfil="${esc(u.id)}"><div><b>${esc(u.nome||u.email)}</b><div class="note">${esc(u.email)}${u.id===S.userId?" · você":""}</div></div>
-        <select class="eq-papel" aria-label="Perfil de ${esc(u.email)}" ${u.id===S.userId?"disabled":""}>${Object.entries(PAPEIS).map(([k,v])=>`<option value="${k}"${u.papel===k?" selected":""}>${v}</option>`).join("")}</select>
+        <select class="eq-papel" aria-label="Perfil de ${esc(u.email)}" ${u.id===S.userId||u.papel==="admin"?"disabled":""}>${Object.entries(u.papel==="admin"?{admin:"Administrador (vê tudo)",...PAPEIS}:PAPEIS).map(([k,v])=>`<option value="${k}"${u.papel===k?" selected":""}>${v}</option>`).join("")}</select>
         <label class="chk"><input type="checkbox" class="eq-ativo" ${u.ativo?"checked":""} ${u.id===S.userId?"disabled":""}> Ativo</label>
         <button class="btn" data-salvarperfil="${esc(u.id)}" ${u.id===S.userId?"disabled":""}>Salvar</button></div>`).join("")}
       <div id="eq-status" class="status" hidden></div>
@@ -1333,20 +1344,20 @@ function iniciarApp(){
   if(appIniciado) return;
   appIniciado=true;
   S.store=supaStore(sb);
-  S.podeComercial=S.papel==="comercial";
+  S.ehAdmin=S.papel==="admin";
+  S.podeFin=S.papel==="admin"||S.papel==="comercial";      // preços de venda, pagamentos, CNPJ
+  S.podeCustos=S.papel==="admin"||S.papel==="producao";    // custos de produção (comercial não tem)
   S.podeEditar=S.papel!=="leitura";
-  S.perfil=S.podeComercial?"comercial":"producao";
+  S.perfil=S.ehAdmin?"tudo":(S.papel==="comercial"?"comercial":"producao");
   $("#auth").hidden=true;$("#auth").innerHTML="";
   $("#appwrap").hidden=false;
-  $("#roles").hidden=!S.podeComercial;
-  $("#equipe").hidden=!S.podeComercial;
+  $("#roles").hidden=!S.ehAdmin;      // só o administrador alterna entre as visões
+  $("#equipe").hidden=!S.ehAdmin;
   render();
   S.store.subscribe("pedidos",m=>{S.pedidos=m;S.carregado=true;if(!$("#overlay").firstChild)render()},e=>{S.carregado=true;toast("Falha ao carregar os pedidos: "+msgErro(e));render()});
-  if(S.podeComercial) S.store.subscribe("financeiro",m=>{S.fin=m;if(!$("#overlay").firstChild)render()});
-  if(S.podeEditar){
-    S.store.subscribe("alertas",m=>{S.alertas=m;renderBell()});
-    S.store.subscribe("custos",m=>{S.custos=m;if(!$("#overlay").firstChild)render()});
-  }
+  if(S.podeFin) S.store.subscribe("financeiro",m=>{S.fin=m;if(!$("#overlay").firstChild)render()});
+  if(S.podeEditar) S.store.subscribe("alertas",m=>{S.alertas=m;renderBell()});
+  if(S.podeCustos) S.store.subscribe("custos",m=>{S.custos=m;if(!$("#overlay").firstChild)render()});
 }
 boot();
 </script>
