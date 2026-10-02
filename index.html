@@ -1,0 +1,1354 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pedidos · Marconi Confecção</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@500&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: tela de login; depois barra superior fixa + quadro por etapa / tabela / resumo; ficha do pedido em painel lateral com um bloco por produto */
+:root{
+  color-scheme:light;
+  --bg:#EDF0F4; --surface:#FFFFFF; --surface2:#F5F7FA; --ink:#14202E; --muted:#5A6B7D; --line:#D8DFE7;
+  --accent:#2347C5; --accent-ink:#FFFFFF; --accent-soft:#E3EAFB;
+  --ok:#1B7A4B; --ok-soft:#DDF1E6; --warn:#955A00; --warn-soft:#FBEBCB; --bad:#B3261E; --bad-soft:#FADDDA;
+  --e1:#7A8797; --e2:#8A5CC9; --e3:#C27A12; --e4:#2347C5; --e5:#1B7A4B; --e6:#B0458A;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --shadow:0 1px 2px rgba(20,32,46,.06),0 4px 14px rgba(20,32,46,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0E151D; --surface:#16202B; --surface2:#1B2733; --ink:#E7EEF5; --muted:#95A5B7; --line:#2A3846;
+  --accent:#7F9BFF; --accent-ink:#0B1220; --accent-soft:#1D2A52;
+  --ok:#4CC38A; --ok-soft:#173528; --warn:#E5A645; --warn-soft:#3A2B10; --bad:#FF8B82; --bad-soft:#40201E;
+  --e1:#93A1B2; --e2:#B592EE; --e3:#E5A645; --e4:#7F9BFF; --e5:#4CC38A; --e6:#E589BE;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3)}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E151D; --surface:#16202B; --surface2:#1B2733; --ink:#E7EEF5; --muted:#95A5B7; --line:#2A3846;
+  --accent:#7F9BFF; --accent-ink:#0B1220; --accent-soft:#1D2A52;
+  --ok:#4CC38A; --ok-soft:#173528; --warn:#E5A645; --warn-soft:#3A2B10; --bad:#FF8B82; --bad-soft:#40201E;
+  --e1:#93A1B2; --e2:#B592EE; --e3:#E5A645; --e4:#7F9BFF; --e5:#4CC38A; --e6:#E589BE;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3)}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:env(safe-area-inset-top,0px) calc(48px + env(safe-area-inset-bottom,0px))}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+img{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1500px;margin-inline:auto}
+
+/* login */
+.authwrap{min-height:100vh;display:grid;place-items:center;padding-block:24px}
+.auth{width:min(400px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:14px;box-shadow:var(--shadow)}
+.auth h1{margin:0;font-family:var(--display);font-size:24px;letter-spacing:-.01em}
+.auth h1 small{display:block;font-family:var(--body);font-weight:500;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.auth p{margin:0;color:var(--muted)}
+.auth .erro{color:var(--bad);font-size:13px}
+.auth .ok{color:var(--ok);font-size:13px}
+.linkbtn{border:0;background:none;color:var(--accent);padding:0;text-align:left;font-weight:500}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;border-bottom:1px solid var(--line);margin-bottom:16px}
+.brand{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin-right:6px}
+.brand small{display:block;font-family:var(--body);font-weight:500;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:2px}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:6px;color:var(--muted);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.spacer{flex:1}
+.search{min-width:0;width:220px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:8px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.role{font-size:12px;color:var(--muted)}
+
+.board{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;align-items:flex-start}
+.col{flex:0 0 272px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;min-width:0}
+.col h3{margin:0;padding:10px 12px;font-family:var(--display);font-size:14px;display:flex;justify-content:space-between;gap:8px;border-top:3px solid var(--c,var(--e1));border-radius:10px 10px 0 0}
+.col h3 span{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:500}
+.cards{display:flex;flex-direction:column;gap:8px;padding:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:left;width:100%;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px;min-width:0}
+.card:hover{border-color:var(--accent)}
+.card .r1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.g{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.card .cli{font-weight:600;overflow-wrap:anywhere}
+.card .prod{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--surface2);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.chip.acc{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.adv{align-self:flex-start;border:0;background:transparent;color:var(--accent);font-weight:600;padding:2px 0;font-size:12px}
+.empty{color:var(--muted);font-size:13px;padding:10px 4px;text-align:center}
+
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:860px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface2);white-space:nowrap}
+tbody tr[data-open]{cursor:pointer}
+tbody tr[data-open]:hover{background:var(--surface2)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.kpi b{display:block;font-family:var(--display);font-size:22px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.panel h3{margin:0 0 10px;font-family:var(--display);font-size:15px}
+.bar{display:grid;grid-template-columns:130px 1fr 36px;gap:8px;align-items:center;margin-block:6px;font-size:13px}
+.bar i{display:block;height:10px;border-radius:5px;background:var(--c,var(--e1));min-width:2px}
+.bar em{font-style:normal;font-family:var(--mono);font-size:12px;text-align:right}
+.list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.list button{width:100%;text-align:left;border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.list button:hover{border-color:var(--accent)}
+
+.scrim{position:fixed;inset:0;background:rgba(10,16,24,.45);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(900px,100%);background:var(--surface);z-index:21;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.25);padding-top:env(safe-area-inset-top,0px)}
+.drawer header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.drawer h2{margin:0;font-family:var(--display);font-size:18px}
+.drawer form{overflow-y:auto;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.drawer footer{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f.full{grid-column:1/-1}
+.f label,.lbl{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.f input,.f select,.f textarea,.modal input,.modal textarea,.modal select,.item input.iprod,.item input.itec,.item input.ibase{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0}
+.f input:disabled{background:var(--surface2);color:var(--muted)}
+.f input[readonly]{background:var(--surface2)}
+.f textarea{min-height:64px;resize:vertical}
+.hint{font-size:12px;color:var(--muted)}
+.sec{grid-column:1/-1;font-family:var(--display);font-weight:700;font-size:13px;padding-top:8px;border-top:1px solid var(--line);color:var(--accent)}
+.sec:first-child{border-top:0;padding-top:0}
+
+#itens{grid-column:1/-1;display:grid;gap:12px}
+.item{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;background:var(--surface2);min-width:0}
+.itemhead{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--display);font-weight:700}
+.row3{display:grid;grid-template-columns:2fr 2fr 1fr;gap:10px}
+.row3 .f label{font-size:11px}
+.matwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.mat{min-width:0;width:100%}
+.mat th,.mat td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:center}
+.mat th:first-child,.mat td:first-child{text-align:left;min-width:120px}
+.mat td input{padding:6px 4px;text-align:center;border:1px solid var(--line);background:var(--surface);border-radius:6px;min-width:44px;width:100%;font-variant-numeric:tabular-nums}
+.mat td:first-child input{text-align:left;padding-inline:8px}
+.mat td input.mpr{min-width:78px}
+.mat tfoot th{background:var(--accent-soft);color:var(--ink);font-variant-numeric:tabular-nums}
+.mat td.n{font-weight:600;white-space:nowrap}
+.x{border:0;background:transparent;color:var(--muted);font-size:15px;line-height:1;padding:2px 4px;margin-left:2px}
+.x:hover{color:var(--bad)}
+.matbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.matbar .l{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.addtam{display:inline-flex;gap:6px}
+.addtam input{width:90px!important}
+.itemsum{font-size:13px;color:var(--muted)}
+.itemsum b{font-family:var(--display);font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+.calc{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.calc div{background:var(--accent-soft);border-radius:8px;padding:8px 12px}
+.calc span{display:block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.calc b{font-family:var(--display);font-size:18px;font-variant-numeric:tabular-nums}
+.aviso{grid-column:1/-1;font-size:13px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:6px 10px}
+
+.custos{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.cgrp{grid-column:1/-1;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:4px}
+.miniimg{display:block;max-width:100%;max-height:260px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.miniact{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.datebox{display:flex;gap:8px;flex-wrap:wrap}
+.dtile{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 16px;display:grid;gap:0;text-align:left}
+.dtile b{font-family:var(--display)}
+.dtile span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dtile[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.dtile:disabled{opacity:.5;cursor:not-allowed}
+.cardlem{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+
+#strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--e6);border-radius:10px;padding:8px 12px;margin-bottom:14px}
+#strip .sh{font-family:var(--display);font-weight:700;margin-right:4px}
+#strip .it{border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:4px 10px;display:inline-flex;gap:8px;align-items:center;font-size:13px}
+#strip .it:hover{border-color:var(--accent)}
+.col.destaque{border-color:var(--e6)}
+.badge{background:var(--bad);color:#fff;border-radius:999px;font-size:11px;padding:1px 7px;margin-left:6px;font-weight:700}
+.alist{display:grid;gap:8px}
+.al{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface2);display:grid;gap:6px}
+.al.novo{border-color:var(--bad)}
+.al .msg{white-space:pre-wrap;overflow-wrap:anywhere}
+.al .acts{display:flex;gap:8px;flex-wrap:wrap}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px}
+.chk input{width:auto!important}
+.eq{display:grid;grid-template-columns:1fr 190px auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+
+.modal{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px}
+.modal .scrim{z-index:0}
+.mbox{position:relative;z-index:1;background:var(--surface);border-radius:12px;width:min(820px,100%);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.mbox header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mbox h2{margin:0;font-family:var(--display);font-size:18px}
+.mbody{padding:14px 16px;display:grid;gap:12px}
+.mbody .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mbody .f{gap:4px}
+.preview{background:#fff;color:#222;border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto}
+.mfoot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.status{font-size:13px;padding:8px 12px;border-radius:8px;background:var(--surface2)}
+.status.ok{background:var(--ok-soft);color:var(--ok)}
+.status.bad{background:var(--bad-soft);color:var(--bad)}
+
+.hero{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:28px 20px;max-width:620px;margin:30px auto;text-align:center}
+.hero h2{margin:0 0 6px;font-family:var(--display)}
+.hero p{color:var(--muted);margin:0 0 14px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;z-index:50;font-weight:500;max-width:90vw}
+.note{font-size:12px;color:var(--muted)}
+@media (max-width:640px){.drawer form,.mbody .row2,.row3,.eq{grid-template-columns:1fr}.search{width:100%}.top{gap:8px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="auth" class="authwrap" hidden></div>
+
+<div class="wrap" id="appwrap" hidden>
+  <div class="top">
+    <div class="brand">Pedidos<small>Marconi Confecção</small></div>
+    <div class="seg" id="views" role="group" aria-label="Visualização">
+      <button data-v="quadro" aria-pressed="true">Quadro</button>
+      <button data-v="tabela" aria-pressed="false">Tabela</button>
+      <button data-v="resumo" aria-pressed="false">Resumo</button>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Buscar cliente, produto ou grupo" aria-label="Buscar">
+    <span class="spacer"></span>
+    <div class="seg" id="roles" role="group" aria-label="Perfil" hidden>
+      <button data-r="comercial" aria-pressed="true">Comercial</button>
+      <button data-r="producao" aria-pressed="false">Produção</button>
+    </div>
+    <span class="role" id="rolelabel"></span>
+    <button class="btn" id="bell" hidden>Alertas<span class="badge" id="badge" hidden>0</span></button>
+    <button class="btn" id="equipe" hidden>Equipe</button>
+    <button class="btn primary" id="novo">Novo pedido</button>
+    <button class="btn" id="sair" title="Sair da conta">Sair</button>
+  </div>
+  <div id="strip" hidden></div>
+  <main id="app"></main>
+</div>
+<div id="overlay"></div>
+<div id="modal"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+"use strict";
+/* ---------- constantes de domínio ---------- */
+const ETAPAS = [
+  {id:"cotacao",   nome:"Cotação",              cor:"var(--e1)", so:"comercial"},
+  {id:"aprovacao", nome:"Aprovação",            cor:"var(--e2)"},
+  {id:"amostra",   nome:"Amostra",              cor:"var(--e3)"},
+  {id:"producao",  nome:"Produção",             cor:"var(--e4)"},
+  {id:"entrega",   nome:"Entregue",             cor:"var(--e5)"},
+  {id:"feedback",  nome:"Feedback · próximo",   cor:"var(--e6)"}
+];
+const AMOSTRA = ["","Solicitada","Enviada","Entregue","Aprovada","Reprovada"];
+const TAM_PADRAO = ["PP","P","M","G","GG","G1","G2","G3"];
+const COPIA_PADRAO = "";   // o e-mail de cópia fica guardado no banco (tabela config), só o Comercial lê
+const EMPRESA = "Marconi Confecção";
+const PEDIDO_TEXTOS = ["grupo","cliente","grade","cores","etapa","amostra","endereco","pilotoProd","pilotoAprov","prazo","obs","feedback","lembrete"];
+const LEMBRETE_DIAS = 10;
+const OPCOES_RETORNO = [10,18];
+const PAPEIS = {comercial:"Comercial (vê tudo)",producao:"Produção (sem valores)",leitura:"Somente leitura"};
+const brl = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
+const num = new Intl.NumberFormat("pt-BR");
+
+/* ---------- utilidades ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const round2 = n=>Math.round(n*100)/100;
+const uid = ()=>Math.random().toString(36).slice(2,8);
+function parseBR(s){
+  if(s==null) return null;
+  if(typeof s==="number") return isFinite(s)?s:null;
+  let t=String(s).replace(/R\$/gi,"").replace(/\s/g,"");
+  if(!t) return null;
+  if(t.includes(",")) t=t.replace(/\./g,"").replace(",",".");
+  else if(/^\d{1,3}(\.\d{3})+$/.test(t)) t=t.replace(/\./g,"");
+  const n=parseFloat(t);
+  return isFinite(n)&&/^-?[\d.]+$/.test(t)?n:null;
+}
+const numPreco = v=>(v===""||v==null)?null:parseBR(v);
+const toBR = n=>n==null||n===""?"":Number(n).toFixed(2).replace(".",",");
+const money = n=>n==null?"—":brl.format(n);
+const dataBR = ts=>ts?new Date(ts).toLocaleDateString("pt-BR"):"";
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,3800)}
+function msgErro(e){
+  const m=String(e?.message||e?.code||"erro");
+  if(/row-level security|permission denied|sem permissao/i.test(m)) return "Você não tem permissão para esta ação.";
+  if(/Failed to fetch|NetworkError/i.test(m)) return "Sem conexão com o servidor. Confira a internet e tente de novo.";
+  return m;
+}
+
+function mascaraCnpj(v){
+  const d=String(v).replace(/\D/g,"").slice(0,14);
+  return d.replace(/^(\d{2})(\d)/,"$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3").replace(/\.(\d{3})(\d)/,".$1/$2").replace(/(\d{4})(\d)/,"$1-$2");
+}
+function cnpjValido(v){
+  const d=String(v||"").replace(/\D/g,"");
+  if(d.length!==14||/^(\d)\1+$/.test(d)) return false;
+  const dv=len=>{let s=0,p=len-7;for(let i=0;i<len;i++){s+=d[i]*p--;if(p<2)p=9}const r=s%11;return r<2?0:11-r};
+  return dv(12)==d[12]&&dv(13)==d[13];
+}
+const emailOk = s=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s||"").trim());
+
+/* ---------- leitura de CSV ---------- */
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,"");
+  const rows=[];let row=[],cur="",q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++} else q=false }
+      else cur+=c;
+    }else if(c==='"') q=true;
+    else if(c===","){row.push(cur);cur=""}
+    else if(c==="\n"||c==="\r"){
+      if(c==="\r"&&text[i+1]==="\n") i++;
+      row.push(cur);cur="";rows.push(row);row=[];
+    }else cur+=c;
+  }
+  if(cur!==""||row.length){row.push(cur);rows.push(row)}
+  return rows;
+}
+const SOMA_NUMEROS=/\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:,\d+)?/g;
+function somaPago(txt){
+  if(!txt||!/pg|pago/i.test(txt)) return 0;
+  const limpo=txt.replace(/\d+\s*%/g,"");
+  return (limpo.match(SOMA_NUMEROS)||[]).reduce((a,n)=>a+(parseBR(n)||0),0);
+}
+function mapearPlanilha(rows){
+  if(!rows.length) return [];
+  const H=rows[0].map(norm);
+  const col=p=>H.findIndex(h=>h.startsWith(p));
+  const ix={grupo:col("numero"),produto:col("produto"),tecido:col("composicao"),cliente:col("cliente"),grade:col("grade"),cores:col("cores"),
+    qtde:col("qtde"),preco:col("preco"),amostra:col("status amostra"),endereco:col("endereco"),pp:col("status producao"),pa:col("status aprovacao"),
+    total:col("valor total"),pag:col("pagamento"),com:col("comissao")};
+  const g=(r,k)=>ix[k]>=0?String(r[ix[k]]??"").replace(/\s+/g," ").trim():"";
+  const out=[];
+  rows.slice(1).forEach((r,n)=>{
+    let produto=g(r,"produto"),tecido=g(r,"tecido"),cliente=g(r,"cliente");
+    const grupo=g(r,"grupo");
+    if(!grupo&&!produto&&!cliente&&!tecido) return;
+    if(!produto&&!cliente&&tecido){cliente=tecido;tecido=""}
+    if(!produto) produto="(a definir)";
+    const qtdeTxt=g(r,"qtde"), precoTxt=g(r,"preco");
+    const qtde=parseBR((qtdeTxt.match(/^[\d.]+/)||[""])[0]);
+    const preco=parseBR(precoTxt);
+    const valorTotal=parseBR(g(r,"total"));
+    const pagamentoTxt=g(r,"pag");
+    const pago=somaPago(pagamentoTxt);
+    const am=norm(g(r,"amostra"));
+    const amostra=am.startsWith("entreg")?"Entregue":am.startsWith("envi")?"Enviada":am.startsWith("aprov")?"Aprovada":am.startsWith("reprov")?"Reprovada":am.startsWith("solic")?"Solicitada":"";
+    let etapa="cotacao";
+    if(pago>0) etapa="producao";
+    else if(amostra) etapa="amostra";
+    else if(valorTotal||(qtde&&preco)) etapa="aprovacao";
+    const obs=[];
+    if(qtdeTxt&&(qtde==null||/[^\d.]/.test(qtdeTxt))) obs.push("Qtde original: "+qtdeTxt);
+    out.push({
+      id:"imp"+String(n+1).padStart(3,"0"),
+      pedido:{grupo,cliente,produto,tecido,grade:g(r,"grade"),cores:g(r,"cores"),qtde,etapa,amostra,endereco:g(r,"endereco"),
+        pilotoProd:g(r,"pp"),pilotoAprov:g(r,"pa"),prazo:"",obs:obs.join(" · "),feedback:"",entradaOk:pago>0},
+      fin:{preco,precoTxt:/^R\$\s*[\d.,]+$/i.test(precoTxt)?"":precoTxt,valorTotal,pago,pagamentoTxt,comissao:parseBR(g(r,"com"))}
+    });
+  });
+  return out;
+}
+
+/* ---------- servidor (Supabase) ---------- */
+const CFG = window.APP_CONFIG||{};
+let sb=null;
+let modoSenha=/type=(invite|recovery)/.test(location.hash);
+
+/* cada coleção é uma tabela com (id, data jsonb); as regras de acesso ficam no banco */
+function supaStore(sb){
+  async function carregar(t){
+    const {data,error}=await sb.from(t).select("id,data");
+    if(error) throw error;
+    return new Map(data.map(r=>[r.id,r.data]));
+  }
+  return{
+    subscribe(t,cb,err){
+      let vivo=true,ocupado=false,outra=false;
+      const rodar=async()=>{
+        if(ocupado){outra=true;return}
+        ocupado=true;
+        try{do{outra=false;const m=await carregar(t);if(vivo)cb(m)}while(outra&&vivo)}
+        catch(e){err?.(e);if(!err)console.warn("falha ao carregar "+t,e)}
+        ocupado=false;
+      };
+      rodar();
+      const ch=sb.channel("rt-"+t).on("postgres_changes",{event:"*",schema:"public",table:t},rodar).subscribe();
+      const iv=setInterval(()=>{if(!document.hidden)rodar()},30000);
+      return()=>{vivo=false;clearInterval(iv);sb.removeChannel(ch)};
+    },
+    async get(t,id){
+      const {data,error}=await sb.from(t).select("data").eq("id",id).maybeSingle();
+      if(error) throw error;
+      return data?data.data:null;
+    },
+    async set(t,id,d){const {error}=await sb.from(t).upsert({id,data:d});if(error) throw error},
+    async update(t,id,patch){const {error}=await sb.rpc("merge_doc",{tabela:t,doc_id:id,patch});if(error) throw error},
+    async remove(t,id){const {error}=await sb.from(t).delete().eq("id",id);if(error) throw error},
+    newId:()=>(crypto.randomUUID?crypto.randomUUID():uid()+uid()+uid())
+  };
+}
+
+/* arquivos privados (comprovantes e minirisco) */
+const TIPOS_COMP={jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",gif:"image/gif",pdf:"application/pdf"};
+const LIMITE_ARQ=15*1024*1024;
+const nomeSeguro=n=>n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\w.\-]+/g,"_").slice(-80);
+function tipoArquivo(file){
+  const ext=(file.name.split(".").pop()||"").toLowerCase();
+  return Object.values(TIPOS_COMP).includes(file.type)?file.type:TIPOS_COMP[ext];
+}
+async function enviarArquivo(bucket,pedidoId,file,tipo){
+  const path=`${pedidoId}/${Date.now()}-${nomeSeguro(file.name)}`;
+  const {error}=await sb.storage.from(bucket).upload(path,file,{contentType:tipo,upsert:false});
+  if(error) throw error;
+  return path;
+}
+async function urlAssinada(bucket,path){
+  const {data,error}=await sb.storage.from(bucket).createSignedUrl(path,3600);
+  if(error) throw error;
+  return data.signedUrl;
+}
+async function abrirArquivo(bucket,path){
+  const w=window.open("","_blank");
+  try{const u=await urlAssinada(bucket,path);if(w)w.location.href=u;else location.href=u}
+  catch(e){w?.close();toast("Não foi possível abrir o arquivo: "+msgErro(e))}
+}
+
+/* ---------- estado ---------- */
+const S={store:null,pedidos:new Map(),fin:new Map(),carregado:false,view:"quadro",q:"",
+  papel:"leitura",podeComercial:false,perfil:"producao",podeEditar:false,userId:null,email:"",aberto:null,
+  alertas:new Map(),alertaDe:null,custos:new Map()};
+const finDe=id=>S.fin.get(id)||{};
+const totalDe=(p,f)=>f.valorTotal??((p.qtde&&f.preco)?round2(p.qtde*f.preco):null);
+const entradaDe=t=>t==null?null:round2(t/2);
+function statusPagto(p,f){
+  const t=totalDe(p,f); if(t==null) return {t:"Sem valor",c:""};
+  const pg=f.pago||0;
+  if(pg>=t-0.01) return {t:"Pago",c:"ok"};
+  if(pg>0) return {t:"Parcial",c:"warn"};
+  return {t:"A receber",c:"bad"};
+}
+const hoje=()=>new Date().toISOString().slice(0,10);
+const atrasado=p=>p.prazo&&p.prazo<hoje()&&p.etapa!=="entrega"&&p.etapa!=="feedback";
+const temQtd=it=>(it.linhas||[]).some(l=>Object.keys(l.q||{}).length);
+const faltaDefinir=p=>{
+  if(Array.isArray(p.itens)&&p.itens.some(temQtd)) return false;
+  return !p.grade||!p.cores||/defin?ir|defnir/i.test(p.grade+" "+p.cores);
+};
+const comercial=()=>S.perfil==="comercial";
+const emAndamento=p=>p.etapa!=="entrega"&&p.etapa!=="feedback";
+
+/* ---------- produtos, matrizes e preços ---------- */
+let ITENS=[], PRECOS={};   // PRECOS[idItem]={base:"39,00", linhas:{idLinha:"45,00"}}  (textos digitados)
+function normItem(it){
+  return {id:it.id||uid(),produto:it.produto||"",tecido:it.tecido||"",
+    tam:Array.isArray(it.tam)&&it.tam.length?[...it.tam]:[...TAM_PADRAO],
+    linhas:(Array.isArray(it.linhas)&&it.linhas.length?it.linhas:[{}]).map(l=>({id:l.id||uid(),cor:l.cor||"",q:{...(l.q||{})}}))};
+}
+function itensDe(p){
+  if(Array.isArray(p.itens)&&p.itens.length) return p.itens.map(normItem);
+  return [normItem({produto:p.produto||"",tecido:p.tecido||""})];
+}
+function precosIniciais(itens,f){
+  const o={};
+  itens.forEach((it,k)=>{
+    const s=(f.precos||{})[it.id]||{};
+    const linhas={};Object.entries(s.linhas||{}).forEach(([lid,v])=>linhas[lid]=toBR(v));
+    const base=s.base!=null?s.base:(k===0&&!f.precos?f.preco:null);
+    o[it.id]={base:toBR(base),linhas};
+  });
+  return o;
+}
+const somaLinha=(it,l)=>it.tam.reduce((a,t)=>a+(+l.q[t]||0),0);
+const somaCol=(it,t)=>it.linhas.reduce((a,l)=>a+(+l.q[t]||0),0);
+const somaItem=it=>it.linhas.reduce((a,l)=>a+somaLinha(it,l),0);
+/* peças e valores de todos os produtos; o preço da cor vale mais que o preço padrão do produto */
+function calcPedido(itens,precos){
+  let q=0,total=0,incompleto=false;
+  const its=itens.map(it=>{
+    const pr=(precos||{})[it.id]||{};
+    const base=numPreco(pr.base);
+    let iq=0,sub=0;
+    const linhas=it.linhas.map(l=>{
+      const lq=somaLinha(it,l), pv=numPreco((pr.linhas||{})[l.id]), preco=pv??base;
+      if(lq>0&&preco==null) incompleto=true;
+      const s=preco!=null?round2(lq*preco):0;
+      iq+=lq;sub+=s;
+      return {q:lq,preco,sub:s};
+    });
+    q+=iq;total+=sub;
+    return {q:iq,sub:round2(sub),base,linhas};
+  });
+  return {q,total:round2(total),incompleto,its};
+}
+function htmlItem(k){
+  const it=ITENS[k], c=comercial(), pr=PRECOS[it.id]||{base:"",linhas:{}};
+  const th=it.tam.map((t,j)=>`<th class="n">${esc(t)}<button type="button" class="x" data-deltam data-k="${k}" data-j="${j}" aria-label="Remover tamanho ${esc(t)}">×</button></th>`).join("");
+  const rows=it.linhas.map((l,i)=>`<tr><td><input class="mcor" data-k="${k}" data-i="${i}" value="${esc(l.cor)}" placeholder="Cor" aria-label="Nome da cor ${i+1}"></td>${
+    c?`<td><input class="mpr" data-k="${k}" data-i="${i}" inputmode="decimal" value="${esc(pr.linhas[l.id]||"")}" placeholder="${esc(pr.base||"padrão")}" aria-label="Valor unitário da cor ${i+1}"></td>`:""}${
+    it.tam.map((t,j)=>`<td><input class="mq" inputmode="numeric" data-k="${k}" data-i="${i}" data-j="${j}" value="${l.q[t]||""}" aria-label="${esc(l.cor||"Cor "+(i+1))}, tamanho ${esc(t)}"></td>`).join("")
+  }<td class="n" id="mr-${k}-${i}">${somaLinha(it,l)||""}</td>${c?`<td class="n" id="ms-${k}-${i}"></td>`:""}<td><button type="button" class="x" data-delcor data-k="${k}" data-i="${i}" aria-label="Remover cor ${i+1}">×</button></td></tr>`).join("");
+  const foot=it.tam.map((t,j)=>`<th class="n" id="mc-${k}-${j}">${somaCol(it,t)||""}</th>`).join("");
+  return `<div class="item">
+    <div class="itemhead"><span>Produto ${k+1}</span>${ITENS.length>1?`<button type="button" class="btn danger" data-delitem data-k="${k}">Remover produto</button>`:""}</div>
+    <div class="row3">
+      <div class="f"><label>Produto</label><input class="iprod" data-k="${k}" value="${esc(it.produto)}" placeholder="Ex.: Macacão cirúrgico"></div>
+      <div class="f"><label>Composição / tecido</label><input class="itec" data-k="${k}" value="${esc(it.tecido)}" placeholder="Ex.: Gabardine"></div>
+      ${c?`<div class="f"><label>Valor unitário padrão (R$)</label><input class="ibase" data-k="${k}" inputmode="decimal" value="${esc(pr.base)}" placeholder="0,00"></div>`:"<div></div>"}
+    </div>
+    <div class="matwrap"><table class="mat"><thead><tr><th>Cor</th>${c?`<th class="n">Valor unit.</th>`:""}${th}<th class="n">Total</th>${c?`<th class="n">Subtotal</th>`:""}<th></th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><th>Total</th>${c?"<th></th>":""}${foot}<th class="n" id="mt-${k}">${somaItem(it)}</th>${c?`<th class="n" id="is-${k}"></th>`:""}<th></th></tr></tfoot></table></div>
+    <div class="matbar"><div class="l"><button type="button" class="btn" data-addcor data-k="${k}">Adicionar cor</button>
+      <span class="addtam"><input id="novotam-${k}" placeholder="Ex.: G4" maxlength="6" aria-label="Novo tamanho"><button type="button" class="btn" data-addtam data-k="${k}">Adicionar tamanho</button></span></div>
+      ${c?`<span class="itemsum">Subtotal do produto <b id="isum-${k}"></b></span>`:""}</div>
+  </div>`;
+}
+const htmlItens=()=>ITENS.map((_,k)=>htmlItem(k)).join("")+`<div><button type="button" class="btn" data-additem>Adicionar produto</button></div>`;
+function atualizaTotais(){
+  const calc=calcPedido(ITENS,PRECOS);
+  ITENS.forEach((it,k)=>{
+    it.linhas.forEach((l,i)=>{
+      const e=$(`#mr-${k}-${i}`);if(e)e.textContent=somaLinha(it,l)||"";
+      const s=$(`#ms-${k}-${i}`),cl=calc.its[k].linhas[i];if(s)s.textContent=cl.q&&cl.preco!=null?money(cl.sub):"";
+    });
+    it.tam.forEach((t,j)=>{const e=$(`#mc-${k}-${j}`);if(e)e.textContent=somaCol(it,t)||""});
+    const a=$(`#mt-${k}`);if(a)a.textContent=calc.its[k].q;
+    const s=$(`#is-${k}`);if(s)s.textContent=money(calc.its[k].sub);
+    const s2=$(`#isum-${k}`);if(s2)s2.textContent=money(calc.its[k].sub);
+  });
+}
+function recalcFicha(src){
+  atualizaTotais();
+  const calc=calcPedido(ITENS,PRECOS), sum=calc.q, q=$("#f-qtde");
+  if(q){ if(sum>0){q.value=sum;q.readOnly=true}else q.readOnly=false }
+  const vt=$("#f-valorTotal"); if(!vt){recalcCustos();return}
+  vt.readOnly=sum>0;
+  if(src!=="total"){
+    if(sum>0) vt.value=toBR(calc.total);
+    else{
+      const qt=parseBR(q?.value), b=numPreco(PRECOS[ITENS[0]?.id]?.base);
+      if(qt&&b!=null) vt.value=toBR(round2(qt*b));
+    }
+  }
+  const total=parseBR(vt.value), ent=entradaDe(total);
+  $("#entrada").textContent=ent!=null?money(ent):"—";
+  $("#saldo").textContent=ent!=null?money(round2(total-ent)):"—";
+  const av=$("#aviso");if(av)av.hidden=!(sum>0&&calc.incompleto);
+  recalcCustos();
+}
+
+/* ---------- lista e renderização ---------- */
+function lista(){
+  const q=norm(S.q);
+  return [...S.pedidos].map(([id,p])=>({id,...p})).filter(p=>{
+    if(!comercial()&&p.etapa==="cotacao") return false;
+    if(!q) return true;
+    return norm([p.grupo,p.cliente,p.produto,p.tecido].join(" ")).includes(q);
+  }).sort((a,b)=>(parseInt(a.grupo)||9999)-(parseInt(b.grupo)||9999));
+}
+function chipsDe(p){
+  const f=finDe(p.id),c=[];
+  if(p.etapa==="feedback") c.push(timerChip(p));
+  if(p.etapa==="producao"&&S.podeEditar){const ct=custoDe(S.custos.get(p.id));c.push(ct>0?`<span class="chip">Custos ${money(ct)}</span>`:`<span class="chip warn">Sem custos lançados</span>`)}
+  if(p.etapa!=="cotacao"&&emAndamento(p)){
+    c.push(p.entradaOk?`<span class="chip ok">Entrada confirmada</span>`:`<span class="chip warn">Aguardando entrada 50%</span>`);
+    if(p.entradaOk&&!p.prazo) c.push(`<span class="chip bad">Definir prazo</span>`);
+  }
+  if(Array.isArray(p.itens)&&p.itens.length>1) c.push(`<span class="chip acc">${p.itens.length} produtos</span>`);
+  if(p.amostra) c.push(`<span class="chip ${p.amostra==="Aprovada"?"ok":p.amostra==="Reprovada"?"bad":"acc"}">Amostra ${esc(p.amostra.toLowerCase())}</span>`);
+  if(p.prazo) c.push(`<span class="chip ${atrasado(p)?"bad":""}">${atrasado(p)?"Atrasado · ":"Prazo "}${esc(p.prazo.split("-").reverse().slice(0,2).join("/"))}</span>`);
+  if(faltaDefinir(p)&&p.etapa!=="cotacao") c.push(`<span class="chip warn">Falta grade/cores</span>`);
+  if(comercial()){const s=statusPagto(p,f);c.push(`<span class="chip ${s.c}">${s.t}</span>`)}
+  return c.join("");
+}
+function viewQuadro(){
+  const L=lista(), cols=ETAPAS.filter(e=>comercial()||e.so!=="comercial");
+  return `<div class="board">${cols.map(e=>{
+    const itens=L.filter(p=>p.etapa===e.id);
+    const prox=ETAPAS[ETAPAS.findIndex(x=>x.id===e.id)+1];
+    return `<section class="col${e.id==="feedback"?" destaque":""}" style="--c:${e.cor}"><h3>${e.nome}<span>${itens.length} · ${num.format(itens.reduce((a,p)=>a+(p.qtde||0),0))} pç</span></h3>
+      <div class="cards">${itens.map(p=>`<button class="card" data-open="${esc(p.id)}">
+        <div class="r1"><span class="cli">${esc(p.cliente||"Sem cliente")}</span><span class="g">G${esc(p.grupo||"–")}</span></div>
+        <div class="prod">${esc(p.produto)}${p.qtde?` · ${num.format(p.qtde)} pç`:""}</div>
+        <div class="chips">${chipsDe(p)}</div>
+        ${S.podeEditar&&prox?`<span class="adv" data-adv="${esc(p.id)}" role="button" tabindex="0">Mover para ${prox.nome} →</span>`:""}
+        ${p.etapa==="feedback"&&S.podeEditar?`<span class="cardlem">Retorno em ${OPCOES_RETORNO.map(n=>`<span class="adv" data-lem="${esc(p.id)}" data-dias="${n}" role="button" tabindex="0">${n} dias (${ddmm(dataEmDias(n))})</span>`).join("")}</span>
+        <span class="adv" data-alert="${esc(p.id)}" role="button" tabindex="0">Alertar o comercial</span>${p.alertaEm?`<span class="note">Comercial alertado em ${dataBR(p.alertaEm)}</span>`:""}`:""}
+      </button>`).join("")||`<div class="empty">Nenhum pedido</div>`}</div></section>`}).join("")}</div>`;
+}
+function viewTabela(){
+  const L=lista(),c=comercial();
+  return `<div class="tablebox"><table><thead><tr><th>Grupo</th><th>Cliente</th><th>Produto</th><th class="n">Qtde</th><th>Etapa</th><th>Amostra</th><th>Prazo</th>
+    ${c?`<th class="n">Valor</th><th class="n">Recebido</th><th>Pagamento</th><th class="n">Comissão</th>`:`<th>Piloto</th>`}</tr></thead><tbody>
+    ${L.map(p=>{const f=finDe(p.id),e=ETAPAS.find(x=>x.id===p.etapa);
+      return `<tr data-open="${esc(p.id)}"><td class="g">${esc(p.grupo)}</td><td>${esc(p.cliente)}</td><td>${esc(p.produto)}</td>
+      <td class="n">${p.qtde?num.format(p.qtde):"—"}</td><td><span class="chip" style="color:${e?.cor}">${e?.nome||""}</span></td>
+      <td>${esc(p.amostra)||"—"}</td><td>${p.prazo?esc(p.prazo.split("-").reverse().join("/")):"—"}</td>
+      ${c?`<td class="n">${money(totalDe(p,f))}</td><td class="n">${money(f.pago||0)}</td><td><span class="chip ${statusPagto(p,f).c}">${statusPagto(p,f).t}</span></td><td class="n">${money(f.comissao??null)}</td>`
+         :`<td>${esc(p.pilotoProd||p.pilotoAprov)||"—"}</td>`}</tr>`}).join("")}
+    </tbody></table></div>${L.length?"":`<div class="empty">Nenhum pedido encontrado.</div>`}`;
+}
+function viewResumo(){
+  const L=lista(),c=comercial();
+  const por=ETAPAS.filter(e=>c||e.so!=="comercial").map(e=>({e,n:L.filter(p=>p.etapa===e.id).length}));
+  const max=Math.max(1,...por.map(x=>x.n));
+  let kpis="";
+  if(c){
+    const A=L.filter(p=>p.etapa!=="cotacao"), cot=L.filter(p=>p.etapa==="cotacao");
+    const tot=A.reduce((a,p)=>a+(totalDe(p,finDe(p.id))||0),0), rec=A.reduce((a,p)=>a+(finDe(p.id).pago||0),0);
+    const com=A.reduce((a,p)=>a+(finDe(p.id).comissao||0),0);
+    const emCot=cot.reduce((a,p)=>a+(totalDe(p,finDe(p.id))||0),0);
+    const comCusto=A.filter(p=>custoDe(S.custos.get(p.id))>0);
+    const mg=comCusto.reduce((a,p)=>a+(totalDe(p,finDe(p.id))||0)-custoDe(S.custos.get(p.id)),0);
+    kpis=[[money(tot),"em carteira (aprovados)"],[money(rec),"recebido"],[money(Math.max(0,tot-rec)),"a receber"],[money(com),"comissão prevista"],[money(emCot),`em cotação (${cot.length})`],[money(mg),`margem em ${comCusto.length} pedido${comCusto.length===1?"":"s"} com custo lançado`]]
+      .map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
+  }else{
+    const prod=L.filter(p=>p.etapa==="producao");
+    kpis=[[prod.length,"pedidos em produção"],[num.format(prod.reduce((a,p)=>a+(p.qtde||0),0)),"peças em produção"],
+      [L.filter(p=>p.etapa==="amostra").length,"amostras em andamento"],[L.filter(atrasado).length,"com prazo vencido"]]
+      .map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
+  }
+  const aten=[];
+  L.filter(atrasado).forEach(p=>aten.push([p,"Prazo vencido"]));
+  L.filter(p=>p.entradaOk&&!p.prazo&&emAndamento(p)&&p.etapa!=="cotacao").forEach(p=>aten.push([p,"Entrada confirmada: definir prazo"]));
+  L.filter(p=>p.etapa==="producao"&&!p.entradaOk).forEach(p=>aten.push([p,"Em produção sem entrada confirmada"]));
+  if(S.podeEditar) L.filter(p=>p.etapa==="producao"&&!(custoDe(S.custos.get(p.id))>0)).forEach(p=>aten.push([p,"Em produção sem custos lançados"]));
+  L.filter(p=>emAndamento(p)&&p.etapa!=="cotacao"&&faltaDefinir(p)).forEach(p=>aten.push([p,"Falta definir grade/cores"]));
+  L.filter(p=>p.amostra==="Enviada").forEach(p=>aten.push([p,"Amostra enviada, sem retorno"]));
+  if(c) L.filter(p=>p.etapa==="producao"&&statusPagto(p,finDe(p.id)).c!=="ok").forEach(p=>aten.push([p,"Em produção com saldo a receber"]));
+  L.filter(p=>p.etapa==="entrega"&&!p.feedback).forEach(p=>aten.push([p,"Entregue, falta registrar feedback"]));
+  L.filter(p=>p.etapa==="feedback").forEach(p=>{const a=alvoLembrete(p);if(a!=null&&a<Date.now()) aten.push([p,"Próximo pedido: lembrete vencido"])});
+  return `<div class="kpis">${kpis}</div><div class="cols2">
+    <div class="panel"><h3>Pedidos por etapa</h3>${por.map(({e,n})=>`<div class="bar" style="--c:${e.cor}"><span>${e.nome}</span><i style="width:${n/max*100}%"></i><em>${n}</em></div>`).join("")}</div>
+    <div class="panel"><h3>Precisa de atenção (${aten.length})</h3><ul class="list">${aten.slice(0,14).map(([p,m])=>`<li><button data-open="${esc(p.id)}"><span>G${esc(p.grupo)} · ${esc(p.cliente)}</span><span class="note">${m}</span></button></li>`).join("")||`<li class="empty">Nada pendente.</li>`}</ul></div></div>`;
+}
+function viewVazio(){
+  if(!S.podeEditar) return `<div class="hero"><h2>Nenhum pedido ainda</h2><p>Quando houver pedidos cadastrados eles aparecem aqui.</p></div>`;
+  return `<div class="hero"><h2>Comece importando a planilha</h2>
+    <p>Na planilha, abra a aba <b>PRODUÇÃO E GRUPOS</b> e use Arquivo → Baixar → Valores separados por vírgula (.csv). Depois escolha o arquivo aqui. Cada linha vira um pedido; valores e pagamentos vão para a área restrita ao Comercial. Também dá para começar direto pelo botão “Novo pedido”.</p>
+    ${S.podeComercial?`<input type="file" id="csv" accept=".csv,text/csv" aria-label="Arquivo CSV da planilha"><div id="prev" class="note" style="margin-top:12px"></div>`
+      :`<p class="note">Só o Comercial pode importar.</p>`}</div>`;
+}
+function render(){
+  const app=$("#app");
+  $("#rolelabel").textContent=S.papel==="comercial"?"":(S.papel==="producao"?"Visão da Produção":"Somente leitura");
+  document.querySelectorAll("#views button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===S.view));
+  document.querySelectorAll("#roles button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===S.perfil));
+  $("#novo").disabled=!S.podeEditar;
+  renderStrip();renderBell();
+  if(!S.carregado){app.innerHTML=`<div class="empty">Carregando pedidos…</div>`;return}
+  if(!S.pedidos.size){app.innerHTML=viewVazio();bindImport();return}
+  app.innerHTML=S.view==="tabela"?viewTabela():S.view==="resumo"?viewResumo():viewQuadro();
+}
+
+/* ---------- ficha do pedido ---------- */
+function campo(k,l,v,o={}){
+  const id="f-"+k, cls="f"+(o.full?" full":""), dis=o.dis?" disabled":"";
+  const dica=o.hint?`<span class="hint">${o.hint}</span>`:"";
+  if(o.sel) return `<div class="${cls}"><label for="${id}">${l}</label><select id="${id}"${dis}>${o.sel.map(x=>{const [val,txt]=Array.isArray(x)?x:[x,x||"—"];return `<option value="${esc(val)}"${val===v?" selected":""}>${esc(txt)}</option>`}).join("")}</select>${dica}</div>`;
+  if(o.area) return `<div class="${cls}"><label for="${id}">${l}</label><textarea id="${id}"${dis}>${esc(v)}</textarea>${dica}</div>`;
+  return `<div class="${cls}"><label for="${id}">${l}</label><input id="${id}" type="${o.t||"text"}" ${o.m?'inputmode="decimal"':""} value="${esc(v)}"${dis}${o.ro?" readonly":""}>${dica}</div>`;
+}
+
+/* custos de produção do pedido (valores totais em R$, não por peça) */
+const CUSTOS_CAMPOS=[
+  {g:"Matéria-prima",c:[["tecido","Tecido"]]},
+  {g:"Corte e risco",c:[["corte","Corte"],["risco","Risco"]]},
+  {g:"Costura",c:[["logCostura","Logística costura"],["costura","Costura"]]},
+  {g:"Revisão",c:[["logRevisao","Logística revisão"],["revisao","Revisão"]]},
+  {g:"Embalagem e despacho",c:[["embalagem","Embalagem"],["durex","Durex"],["sacos","Sacos para despacho"]]},
+  {g:"Segunda linha",c:[["segundaLinha","Segunda linha"]]},
+  {g:"Aviamentos",c:[["ziper","Zíper"],["cordao","Cordão"],["elastico","Elástico"],["etiqueta","Etiqueta"]]}
+];
+const custoDe=C=>CUSTOS_CAMPOS.reduce((a,g)=>a+g.c.reduce((b,[k])=>b+(+C?.[k]||0),0),0);
+const ehPdf=n=>/\.pdf$/i.test(n||"");
+function htmlMini(C){
+  let corpo=`<span class="note">Nenhum minirisco anexado.</span>`;
+  const quando=C.miniEm?` <span class="note">anexado em ${dataBR(C.miniEm)}</span>`:"";
+  if(C.miniPath){
+    corpo=ehPdf(C.miniNome)
+      ?`<a href="#" data-arq data-bucket="miniriscos" data-path="${esc(C.miniPath)}">${esc(C.miniNome||"Minirisco (PDF)")}</a>${quando}`
+      :`<a href="#" data-arq data-bucket="miniriscos" data-path="${esc(C.miniPath)}"><img class="miniimg" id="miniImg" alt="Minirisco"></a>${quando}`;
+  }
+  const remover=C.miniPath?`<button type="button" class="btn" data-minirm>Remover anexo</button>`:"";
+  return `<div class="f full"><span class="lbl">Minirisco</span><div id="miniBox">${corpo}</div>
+    <div class="miniact"><input type="file" id="mini" accept="image/*,application/pdf" aria-label="Anexar minirisco">${remover}</div>
+    <span class="hint">JPG, PNG ou PDF, até 15 MB.</span></div>`;
+}
+function htmlCustos(C){
+  const grupos=CUSTOS_CAMPOS.map(g=>`<div class="cgrp">${g.g}</div>`+g.c.map(([k,l])=>
+    `<div class="f"><label for="c-${k}">${l} (R$)</label><input class="cust" id="c-${k}" inputmode="decimal" value="${toBR(C[k])}" placeholder="0,00"></div>`).join("")).join("");
+  return `<div class="sec">Custos de produção</div>
+    <div class="custos">${grupos}</div>
+    <div class="calc"><div><span>Total de custos</span><b id="cTotal">—</b></div><div><span>Custo por peça</span><b id="cPeca">—</b></div>
+      ${comercial()?`<div><span>Margem (venda menos custos)</span><b id="cMargem">—</b></div>`:""}</div>
+    ${campo("custoObs","Observações dos custos",C.obs??"",{full:1,area:1})}
+    ${htmlMini(C)}`;
+}
+function recalcCustos(){
+  const ct=$("#cTotal");if(!ct)return;
+  let tot=0;CUSTOS_CAMPOS.forEach(g=>g.c.forEach(([k])=>{tot+=parseBR($("#c-"+k)?.value)||0}));
+  tot=round2(tot);
+  const q=parseBR($("#f-qtde")?.value)||0;
+  ct.textContent=money(tot);
+  $("#cPeca").textContent=q>0&&tot>0?money(round2(tot/q)):"—";
+  const m=$("#cMargem");
+  if(m){
+    const vt=parseBR($("#f-valorTotal")?.value);
+    if(vt&&tot>0){const mg=round2(vt-tot);m.textContent=`${money(mg)} (${(mg/vt*100).toFixed(1).replace(".",",")}%)`;m.style.color=mg<0?"var(--bad)":""}
+    else{m.textContent="—";m.style.color=""}
+  }
+}
+function lerCustos(){
+  if(!$("#c-tecido")) return null;
+  const dados={};let any=false;
+  CUSTOS_CAMPOS.forEach(g=>g.c.forEach(([k])=>{const v=parseBR($("#c-"+k).value);dados[k]=v;if(v)any=true}));
+  dados.obs=($("#f-custoObs")?.value||"").trim();
+  return {dados,any:any||!!dados.obs};
+}
+function carregarMini(id){
+  const C=S.custos.get(id);
+  if(!C?.miniPath||ehPdf(C.miniNome)) return;
+  urlAssinada("miniriscos",C.miniPath).then(u=>{const i=$("#miniImg");if(i)i.src=u}).catch(()=>{});
+}
+async function anexarMinirisco(file){
+  if(!file) return;
+  const tipo=tipoArquivo(file);
+  if(!tipo){toast("Envie o minirisco em JPG, PNG ou PDF.");return}
+  if(file.size>LIMITE_ARQ){toast("O arquivo passa de 15 MB. Reduza o tamanho e tente de novo.");return}
+  if(!S.aberto||!(await salvar({keep:true}))) return;
+  const id=S.aberto;
+  try{
+    const path=await enviarArquivo("miniriscos",id,file,tipo);
+    const antigo=S.custos.get(id)?.miniPath;
+    const patch={miniPath:path,miniNome:file.name,miniEm:Date.now()};
+    if(S.custos.has(id)) await S.store.update("custos",id,patch); else await S.store.set("custos",id,patch);
+    S.custos.set(id,{...(S.custos.get(id)||{}),...patch});
+    if(antigo) sb.storage.from("miniriscos").remove([antigo]).catch(()=>{});
+    abrir(id);toast("Minirisco anexado.");
+  }catch(e){toast("Não foi possível anexar o minirisco: "+msgErro(e))}
+}
+async function removerMinirisco(){
+  if(!S.aberto||!(await salvar({keep:true}))) return;
+  const id=S.aberto,antigo=S.custos.get(id)?.miniPath,patch={miniPath:null,miniNome:"",miniEm:null};
+  try{
+    await S.store.update("custos",id,patch);S.custos.set(id,{...(S.custos.get(id)||{}),...patch});
+    if(antigo) sb.storage.from("miniriscos").remove([antigo]).catch(()=>{});
+    abrir(id);toast("Anexo removido.");
+  }catch(e){toast("Não foi possível remover o anexo: "+msgErro(e))}
+}
+
+function abrir(id){
+  const novo=!id, p=novo?{etapa:comercial()?"cotacao":"aprovacao"}:S.pedidos.get(id), f=novo?{}:finDe(id);
+  S.aberto=id||null;
+  ITENS=itensDe(p);
+  PRECOS=precosIniciais(ITENS,f);
+  const ed=S.podeEditar, c=comercial(), C=S.custos.get(id)||{};
+  const etapasOk=ETAPAS.filter(e=>c||e.so!=="comercial").map(e=>[e.id,e.nome]);
+  const calc=calcPedido(ITENS,PRECOS), temQ=calc.q>0;
+  const total=temQ?calc.total:totalDe({qtde:p.qtde},f), ent=entradaDe(f.valorTotal??total);
+  const comp=f.comprovantePath
+    ?`<a href="#" data-arq data-bucket="comprovantes" data-path="${esc(f.comprovantePath)}">${esc(f.comprovanteNome||"Ver comprovante")}</a> <span class="note">anexado em ${dataBR(f.comprovanteEm)}</span>`
+    :p.entradaOk?`<span class="note">Pagamento registrado na planilha, sem arquivo anexado.</span>`:`<span class="note">Nenhum comprovante anexado.</span>`;
+  $("#overlay").innerHTML=`<div class="scrim" data-close></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Ficha do pedido">
+    <header><h2>${novo?"Novo pedido":`G${esc(p.grupo||"–")} · ${esc(p.cliente||"")}`}</h2><button class="btn" data-close>Fechar</button></header>
+    <form id="ficha" autocomplete="off"><fieldset style="display:contents;border:0;padding:0;margin:0" ${ed?"":"disabled"}>
+      <div class="sec">Pedido</div>
+      ${campo("grupo","Nº do grupo",p.grupo??"")}${campo("etapa","Etapa",p.etapa,{sel:etapasOk})}
+      ${campo("cliente","Cliente",p.cliente??"",{full:1})}
+      ${campo("qtde","Total de peças do pedido",p.qtde??"",{m:1,ro:temQ,hint:"Soma de todos os produtos abaixo"})}
+      ${campo("prazo","Prazo de entrega",p.prazo??"",{t:"date",dis:!p.entradaOk,hint:p.entradaOk?"Entrada confirmada. Defina o prazo.":"Liberado depois do comprovante da entrada."})}
+      <div class="sec">Produtos, cores e tamanhos</div>
+      <div id="itens">${htmlItens()}</div>
+      ${(p.grade||p.cores)?`${campo("grade","Grade (anotação da planilha)",p.grade??"",{full:1,area:1})}${campo("cores","Cores (anotação da planilha)",p.cores??"",{full:1,area:1})}`:""}
+      ${c?`<div class="sec">Valores e pagamento (visível só ao Comercial)</div>
+      ${campo("valorTotal","Valor total do pedido (R$)",toBR(f.valorTotal??(temQ?calc.total:null)),{m:1,ro:temQ,hint:"Soma dos produtos. Cada cor pode ter valor próprio."})}
+      ${campo("pago","Recebido até agora (R$)",toBR(f.pago),{m:1})}
+      <div class="aviso" id="aviso" hidden>Há cores com quantidade e sem valor unitário. Preencha o valor padrão do produto ou o valor da cor.</div>
+      <div class="calc"><div><span>Entrada de 50% para iniciar a produção</span><b id="entrada">${ent!=null?money(ent):"—"}</b></div>
+        <div><span>Saldo restante (50%)</span><b id="saldo">${ent!=null?money(round2((f.valorTotal??total)-ent)):"—"}</b></div></div>
+      ${campo("comissao","Comissão (R$)",toBR(f.comissao),{m:1})}${campo("precoTxt","Observação de preço",f.precoTxt??"")}
+      ${campo("pagamentoTxt","Anotação de pagamento",f.pagamentoTxt??"",{full:1})}
+      <div class="f full"><span class="lbl">Comprovante da entrada</span><div>${comp}</div>
+        ${!novo?`<input type="file" id="comp" accept="image/*,application/pdf" aria-label="Anexar comprovante">`:`<span class="hint">Salve o pedido antes de anexar o comprovante.</span>`}</div>
+      <div class="sec">Cliente para emissão da NF-e</div>
+      ${campo("razao","Razão social",f.razao??"",{full:1})}
+      ${campo("cnpj","CNPJ",f.cnpj??"",{hint:"Obrigatório para criar o e-mail e emitir a NF-e"})}${campo("emailCliente","E-mail do cliente",f.emailCliente??"",{t:"email"})}`:""}
+      <div class="sec">Amostra e piloto</div>
+      ${campo("amostra","Status da amostra",p.amostra??"",{sel:AMOSTRA})}${campo("pilotoProd","Produção do piloto",p.pilotoProd??"")}
+      ${campo("endereco","Endereço para envio da amostra",p.endereco??"",{full:1})}${campo("pilotoAprov","Aprovação do piloto",p.pilotoAprov??"",{full:1})}
+      ${novo||!ed?"":htmlCustos(C)}
+      <div class="sec">Produção e próximo pedido</div>
+      ${campo("obs","Observações da produção",p.obs??"",{full:1,area:1})}
+      ${campo("feedback","Feedback do cliente (para programar o próximo pedido)",p.feedback??"",{full:1,area:1})}
+      <div class="f full"><span class="lbl">Informar o retorno do cliente em</span>
+        <div class="datebox" id="datebox">${OPCOES_RETORNO.map(n=>`<button type="button" class="dtile" data-dias="${n}" aria-pressed="false"><b>${n} dias</b><span>${ddmm(dataEmDias(n))}</span></button>`).join("")}</div></div>
+      ${campo("lembrete","Data do retorno (próximo pedido)",p.lembrete??"",{t:"date",hint:`Escolha 10 ou 18 dias acima, ou informe outra data. Se ficar vazio, vira ${LEMBRETE_DIAS} dias após entrar em Feedback.`})}
+      <div class="f"><span class="lbl">Contagem</span><div><span class="chip" id="drawerTimer"></span></div></div>
+    </fieldset></form>
+    <footer>${ed?`<button class="btn primary" id="salvar">Salvar</button>`:""}
+      ${!novo&&ed?`<button class="btn" id="alertar">Alertar o comercial</button>`:""}
+      ${!novo&&c&&ed?`<button class="btn" id="abrirEmail">E-mail ao cliente</button><button class="btn danger" id="excluir">Excluir pedido</button>`:""}</footer>
+  </aside>`;
+  atualizaTotais();syncDrawerTimer();recalcCustos();carregarMini(id);
+  const av=$("#aviso");if(av)av.hidden=!(temQ&&calc.incompleto);
+  if(novo){const el=$("#f-cliente");el&&el.focus()}
+}
+const fechar=()=>{$("#overlay").innerHTML="";S.aberto=null};
+const fecharModal=()=>{$("#modal").innerHTML=""};
+
+async function salvar(opt={}){
+  const g=k=>{const el=$("#f-"+k);return el?el.value.trim():undefined};
+  const p={};
+  PEDIDO_TEXTOS.forEach(k=>{const v=g(k);if(v!==undefined) p[k]=v});
+  if(p.etapa==="feedback"&&!p.lembrete) p.lembrete=lembreteInicial();
+  let itens=ITENS.map(it=>({id:it.id,produto:it.produto.trim(),tecido:it.tecido.trim(),tam:[...it.tam],
+    linhas:it.linhas.filter(l=>l.cor.trim()||Object.keys(l.q).length).map(l=>({id:l.id,cor:l.cor.trim(),q:{...l.q}}))}));
+  itens.forEach(it=>{if(!it.linhas.length) it.linhas=[{id:uid(),cor:"",q:{}}]});
+  const vazio=it=>!it.produto&&!it.tecido&&!temQtd(it)&&it.linhas.every(l=>!l.cor);
+  if(itens.length>1) itens=itens.filter(it=>!vazio(it));
+  if(!itens.length) itens=[normItem({})];
+  const calc=calcPedido(itens,PRECOS), soma=calc.q;
+  p.itens=itens;
+  p.produto=itens.map(i=>i.produto).filter(Boolean).join(" + ");
+  p.tecido=[...new Set(itens.map(i=>i.tecido).filter(Boolean))].join(" / ");
+  p.qtde=soma>0?soma:parseBR(g("qtde"));
+  if(!p.cliente&&!p.produto){toast("Informe ao menos o cliente ou o nome de um produto.");return false}
+  const cnpj=g("cnpj");
+  if(cnpj&&!cnpjValido(cnpj)){toast("CNPJ inválido. Confira os 14 dígitos.");$("#f-cnpj")?.focus();return false}
+  const mail=g("emailCliente");
+  if(mail&&!emailOk(mail)){toast("E-mail do cliente inválido.");$("#f-emailCliente")?.focus();return false}
+  p.atualizado=Date.now();
+  const btn=$("#salvar");if(btn)btn.disabled=true;
+  try{
+    const id=S.aberto||S.store.newId();
+    if(S.aberto) await S.store.update("pedidos",id,p);
+    else await S.store.set("pedidos",id,{...p,entradaOk:false});
+    S.pedidos.set(id,{...(S.pedidos.get(id)||{}),...p});
+    if(comercial()){
+      const precos={};
+      itens.forEach(it=>{
+        const pr=PRECOS[it.id]||{},linhas={};
+        it.linhas.forEach(l=>{const v=numPreco((pr.linhas||{})[l.id]);if(v!=null) linhas[l.id]=v});
+        precos[it.id]={base:numPreco(pr.base),linhas};
+      });
+      const vt=soma>0?calc.total:parseBR(g("valorTotal"));
+      const f={precos,preco:precos[itens[0].id].base,valorTotal:vt,entrada:entradaDe(vt),precoTxt:g("precoTxt")||"",pago:parseBR(g("pago"))||0,
+        comissao:parseBR(g("comissao")),pagamentoTxt:g("pagamentoTxt")||"",razao:g("razao")||"",cnpj:cnpj||"",emailCliente:mail||""};
+      if(S.fin.has(id)) await S.store.update("financeiro",id,f); else await S.store.set("financeiro",id,f);
+      S.fin.set(id,{...(S.fin.get(id)||{}),...f});
+    }
+    const cu=lerCustos();
+    if(cu&&(S.custos.has(id)||cu.any)){
+      const doc={...cu.dados,atualizado:Date.now()};
+      if(S.custos.has(id)) await S.store.update("custos",id,doc); else await S.store.set("custos",id,doc);
+      S.custos.set(id,{...(S.custos.get(id)||{}),...doc});
+    }
+    if(opt.keep){S.aberto=id;if(btn)btn.disabled=false;return true}
+    fechar();toast("Pedido salvo.");return true;
+  }catch(e){if(btn)btn.disabled=false;toast("Não foi possível salvar: "+msgErro(e));return false}
+}
+async function excluir(){
+  const b=$("#excluir");
+  if(!b.dataset.sure){b.dataset.sure="1";b.textContent="Confirmar exclusão";return}
+  try{await S.store.remove("pedidos",S.aberto);fechar();toast("Pedido excluído.")}
+  catch(e){toast("Não foi possível excluir: "+msgErro(e))}
+}
+async function avancar(id){
+  const p=S.pedidos.get(id),i=ETAPAS.findIndex(e=>e.id===p.etapa),prox=ETAPAS[i+1];
+  if(!prox) return;
+  const patch={etapa:prox.id,atualizado:Date.now()};
+  if(prox.id==="feedback"&&!p.lembrete) patch.lembrete=lembreteInicial();
+  try{await S.store.update("pedidos",id,patch);S.pedidos.set(id,{...p,...patch});render();toast(`Movido para ${prox.nome}.`)}
+  catch(e){toast("Não foi possível mover o pedido: "+msgErro(e))}
+}
+
+/* ---------- comprovante da entrada ---------- */
+async function anexarComprovante(file){
+  if(!file) return;
+  const tipo=tipoArquivo(file);
+  if(!tipo){toast("Envie o comprovante em JPG, PNG ou PDF.");return}
+  if(file.size>LIMITE_ARQ){toast("O arquivo passa de 15 MB. Reduza o tamanho e tente de novo.");return}
+  if(!S.aberto||!(await salvar({keep:true}))) return;
+  const id=S.aberto;
+  try{
+    const path=await enviarArquivo("comprovantes",id,file,tipo);
+    const total=parseBR($("#f-valorTotal")?.value), ent=entradaDe(total);
+    const pago=Math.max(parseBR($("#f-pago")?.value)||0,ent||0);
+    const fin={comprovantePath:path,comprovanteNome:file.name,comprovanteEm:Date.now(),pago};
+    await S.store.update("financeiro",id,fin);
+    await S.store.update("pedidos",id,{entradaOk:true,entradaEm:Date.now()});
+    S.fin.set(id,{...finDe(id),...fin});S.pedidos.set(id,{...S.pedidos.get(id),entradaOk:true});
+    abrir(id);toast("Comprovante anexado. O prazo de entrega foi liberado.");
+  }catch(e){toast("Não foi possível anexar: "+msgErro(e))}
+}
+
+/* ---------- e-mail ao cliente ---------- */
+const ESTILO_TH="border:1px solid #ccc;padding:5px 9px;background:#f0f2f5;text-align:center";
+const ESTILO_TD="border:1px solid #ccc;padding:5px 9px;text-align:center";
+function montarEmail(p,f,cfg){
+  const itens=itensDe(p), calc=calcPedido(itens,precosIniciais(itens,f));
+  const total=calc.total, ent=entradaDe(total);
+  const nomes=itens.map(i=>i.produto).filter(Boolean).join(" + ");
+  let htmlItens="",txtItens="";
+  itens.forEach((it,k)=>{
+    const ci=calc.its[k]; if(ci.q<=0) return;
+    const tams=it.tam.filter(t=>somaCol(it,t)>0);
+    const idx=it.linhas.map((l,i)=>i).filter(i=>ci.linhas[i].q>0);
+    htmlItens+=`<p style="margin:14px 0 2px"><b>${esc(it.produto||"Produto "+(k+1))}</b>${it.tecido?` · ${esc(it.tecido)}`:""}</p>
+    <table style="border-collapse:collapse;font-size:13px;margin:6px 0"><thead><tr><th style="${ESTILO_TH};text-align:left">Cor</th>${tams.map(t=>`<th style="${ESTILO_TH}">${esc(t)}</th>`).join("")}<th style="${ESTILO_TH}">Peças</th><th style="${ESTILO_TH}">Valor unit.</th><th style="${ESTILO_TH}">Subtotal</th></tr></thead><tbody>${
+      idx.map(i=>{const l=it.linhas[i],cl=ci.linhas[i];return `<tr><td style="${ESTILO_TD};text-align:left">${esc(l.cor||"-")}</td>${tams.map(t=>`<td style="${ESTILO_TD}">${l.q[t]||""}</td>`).join("")}<td style="${ESTILO_TD};font-weight:bold">${cl.q}</td><td style="${ESTILO_TD}">${money(cl.preco)}</td><td style="${ESTILO_TD}">${money(cl.sub)}</td></tr>`}).join("")
+    }</tbody><tfoot><tr><th style="${ESTILO_TH};text-align:left">Total</th>${tams.map(t=>`<th style="${ESTILO_TH}">${somaCol(it,t)}</th>`).join("")}<th style="${ESTILO_TH}">${ci.q}</th><th style="${ESTILO_TH}"></th><th style="${ESTILO_TH}">${money(ci.sub)}</th></tr></tfoot></table>`;
+    txtItens+=`${it.produto||"Produto "+(k+1)}${it.tecido?" ("+it.tecido+")":""}\n`+idx.map(i=>{const l=it.linhas[i],cl=ci.linhas[i];
+      return `  ${l.cor||"-"}: ${tams.filter(t=>l.q[t]).map(t=>`${t} ${l.q[t]}`).join(", ")} | ${cl.q} pç x ${money(cl.preco)} = ${money(cl.sub)}`}).join("\n")+`\n  Subtotal: ${ci.q} pç, ${money(ci.sub)}\n\n`;
+  });
+  const val=`<table style="border-collapse:collapse;font-size:14px;margin:12px 0"><tr><td style="padding:3px 14px 3px 0">Total de peças</td><td><b>${num.format(calc.q)}</b></td></tr>
+    <tr><td style="padding:3px 14px 3px 0">Valor total</td><td><b>${money(total)}</b></td></tr>
+    <tr><td style="padding:3px 14px 3px 0">Entrada de 50% (para iniciar a produção)</td><td><b>${money(ent)}</b></td></tr>
+    <tr><td style="padding:3px 14px 3px 0">Saldo de 50%</td><td><b>${money(ent!=null?round2(total-ent):null)}</b></td></tr></table>`;
+  const pg=cfg.dadosPagamento?`<p><b>Dados para pagamento</b><br>${esc(cfg.dadosPagamento).replace(/\n/g,"<br>")}</p>`:"";
+  const ass=cfg.assinatura?`<p>${esc(cfg.assinatura).replace(/\n/g,"<br>")}</p>`:"";
+  const html=`<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.5">
+    <p>Olá, ${esc(p.cliente||"")}!</p>
+    <p>Segue o resumo do seu pedido <b>nº ${esc(p.grupo||"")}</b>.</p>${htmlItens}${val}
+    <p>Para iniciarmos a produção, pedimos o pagamento da entrada de 50% (<b>${money(ent)}</b>) e o envio do comprovante respondendo a este e-mail. O prazo de entrega será informado após a confirmação do comprovante.</p>${pg}
+    <p><b>Dados para emissão da NF-e</b><br>Razão social: ${esc(f.razao||"-")}<br>CNPJ: ${esc(f.cnpj||"-")}<br>Se algo estiver incorreto, avise antes do pagamento.</p>${ass}</div>`;
+  const texto=(`Olá, ${p.cliente||""}!\n\nSegue o resumo do seu pedido nº ${p.grupo||""}.\n\n${txtItens}Total de peças: ${num.format(calc.q)}\nValor total: ${money(total)}\nEntrada de 50% (para iniciar a produção): ${money(ent)}\nSaldo de 50%: ${money(ent!=null?round2(total-ent):null)}\n\nPara iniciarmos a produção, pedimos o pagamento da entrada de 50% (${money(ent)}) e o envio do comprovante respondendo a este e-mail. O prazo de entrega será informado após a confirmação do comprovante.\n\n${cfg.dadosPagamento?"Dados para pagamento:\n"+cfg.dadosPagamento+"\n\n":""}Dados para emissão da NF-e:\nRazão social: ${f.razao||"-"}\nCNPJ: ${f.cnpj||"-"}\nSe algo estiver incorreto, avise antes do pagamento.\n\n${cfg.assinatura||""}`).trimEnd();
+  return {html,texto,total,ent,q:calc.q,assunto:`Pedido - ${nomes} - ${EMPRESA}`};
+}
+const EM={cfg:{}};
+function lerEmailForm(){
+  const v=id=>($("#"+id)?.value||"").trim();
+  return {to:v("em-to"),cc:v("em-cc"),assunto:v("em-as"),cfg:{dadosPagamento:v("em-pg"),assinatura:v("em-ass")}};
+}
+function atualizaPreviaEmail(){
+  const id=S.aberto;if(!id||!$("#em-prev"))return;
+  const form=lerEmailForm();
+  EM.mail=montarEmail(S.pedidos.get(id),finDe(id),form.cfg);
+  $("#em-prev").innerHTML=EM.mail.html;
+}
+async function abrirEmail(){
+  if(!(await salvar({keep:true}))) return;
+  const id=S.aberto,p=S.pedidos.get(id),f=finDe(id);
+  const itens=itensDe(p), calc=calcPedido(itens,precosIniciais(itens,f));
+  const faltas=[];
+  if(!cnpjValido(f.cnpj)) faltas.push("CNPJ válido do cliente (necessário para a NF-e)");
+  if(!emailOk(f.emailCliente)) faltas.push("e-mail do cliente");
+  if(calc.q<=0) faltas.push("quantidades na matriz de cores e tamanhos");
+  if(calc.incompleto) faltas.push("valor unitário de todas as cores com quantidade");
+  if(itens.some((it,k)=>calc.its[k].q>0&&!it.produto)) faltas.push("nome de cada produto");
+  if(faltas.length){toast("Antes de gerar o e-mail, preencha: "+faltas.join("; ")+".");return}
+  let cfg={};try{cfg=(await S.store.get("config","empresa"))||{}}catch(e){}
+  EM.cfg=cfg;
+  const m=montarEmail(p,f,cfg);
+  $("#modal").innerHTML=`<div class="modal"><div class="scrim" data-closemodal></div><div class="mbox" role="dialog" aria-modal="true" aria-label="E-mail ao cliente">
+    <header><h2>E-mail ao cliente · G${esc(p.grupo||"–")}</h2><button class="btn" data-closemodal>Fechar</button></header>
+    <div class="mbody">
+      <div class="row2"><div class="f"><label for="em-to">Para</label><input id="em-to" type="email" value="${esc(f.emailCliente)}"></div>
+        <div class="f"><label for="em-cc">Com cópia para</label><input id="em-cc" value="${esc(cfg.copia||COPIA_PADRAO)}"></div></div>
+      <div class="f"><label for="em-as">Assunto</label><input id="em-as" value="${esc(m.assunto)}"></div>
+      <div class="row2"><div class="f"><label for="em-pg">Dados para pagamento (Pix ou conta)</label><textarea id="em-pg" rows="3" placeholder="Ex.: Pix CNPJ 00.000.000/0001-00 · Banco ...">${esc(cfg.dadosPagamento||"")}</textarea></div>
+        <div class="f"><label for="em-ass">Assinatura</label><textarea id="em-ass" rows="3" placeholder="Nome, telefone">${esc(cfg.assinatura||"")}</textarea></div></div>
+      <div><span class="lbl">Prévia</span><div class="preview" id="em-prev">${m.html}</div></div>
+      <div id="em-status" class="status" hidden></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn primary" id="em-copy">1. Copiar e-mail formatado</button>
+      <button class="btn" id="em-gmail">2. Abrir o Gmail</button>
+      <button class="btn" id="em-mailto">Abrir no programa de e-mail</button>
+    </div></div></div>`;
+  EM.mail=m;
+}
+function statusModal(msg,cls){const s=$("#em-status")||$("#al-status");if(!s)return;s.hidden=false;s.className="status "+(cls||"");s.innerHTML=msg}
+async function salvarCfgEmail(form){
+  const cfg={...EM.cfg,dadosPagamento:form.cfg.dadosPagamento,assinatura:form.cfg.assinatura,copia:form.cc};
+  try{await S.store.set("config","empresa",cfg);EM.cfg=cfg}catch(e){}
+}
+function validarEmail(form){
+  if(!emailOk(form.to)){statusModal("Informe um e-mail válido do cliente.","bad");return null}
+  const cc=form.cc.split(/[;,\s]+/).filter(Boolean);
+  if(cc.some(x=>!emailOk(x))){statusModal("Confira os e-mails em cópia.","bad");return null}
+  return cc;
+}
+async function copiarFormatado(){
+  atualizaPreviaEmail();
+  const m=EM.mail;
+  try{
+    if(window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([m.html],{type:"text/html"}),"text/plain":new Blob([m.texto],{type:"text/plain"})})]);
+    else await navigator.clipboard.writeText(m.texto);
+    return true;
+  }catch(e){return false}
+}
+async function registrarEmail(modo){
+  const id=S.aberto,reg={emailEm:Date.now(),emailModo:modo};
+  try{await S.store.update("financeiro",id,reg);S.fin.set(id,{...finDe(id),...reg})}catch(e){}
+}
+async function acaoEmail(modo){
+  const form=lerEmailForm(), cc=validarEmail(form);
+  if(!cc) return;
+  atualizaPreviaEmail();
+  if(modo==="copiar"){
+    const ok=await copiarFormatado();
+    statusModal(ok?"E-mail copiado com a formatação. Agora clique em “2. Abrir o Gmail” e cole (Ctrl+V) no corpo da mensagem.":"O navegador não permitiu copiar. Selecione a prévia, copie e cole no Gmail.",ok?"ok":"bad");
+    return;
+  }
+  await salvarCfgEmail(form);
+  const enc=encodeURIComponent;
+  if(modo==="gmail"){
+    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${enc(form.to)}&cc=${enc(cc.join(","))}&su=${enc(form.assunto||EM.mail.assunto)}`,"_blank");
+    statusModal("Gmail aberto com destinatário, cópia e assunto. Se ainda não copiou, use o botão 1 e cole o e-mail no corpo.","ok");
+  }else{
+    location.href=`mailto:${form.to}?cc=${enc(cc.join(","))}&subject=${enc(form.assunto||EM.mail.assunto)}&body=${enc(EM.mail.texto)}`;
+    statusModal("Programa de e-mail aberto. Confira a mensagem antes de enviar.","ok");
+  }
+  registrarEmail(modo);
+}
+
+/* ---------- próximo pedido: lembrete com contagem e alerta ao comercial ---------- */
+function dataEmDias(n){
+  const d=new Date();d.setDate(d.getDate()+n);
+  const z=x=>String(x).padStart(2,"0");
+  return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
+}
+const lembreteInicial=()=>dataEmDias(LEMBRETE_DIAS);
+const ddmm=iso=>iso?iso.split("-").reverse().slice(0,2).join("/"):"";
+async function definirRetorno(id,dias){
+  const p=S.pedidos.get(id);if(!p)return;
+  const lembrete=dataEmDias(dias);
+  try{await S.store.update("pedidos",id,{lembrete,atualizado:Date.now()});S.pedidos.set(id,{...p,lembrete});render();toast(`Retorno do cliente marcado para ${ddmm(lembrete)} (${dias} dias).`)}
+  catch(e){toast("Não foi possível definir o retorno: "+msgErro(e))}
+}
+const alvoLembrete=p=>p.lembrete?new Date(p.lembrete+"T09:00:00").getTime():null;
+function tempoTxt(alvo){
+  const d=alvo-Date.now(), ab=Math.abs(d);
+  const dias=Math.floor(ab/864e5), h=Math.floor(ab%864e5/36e5), m=Math.floor(ab%36e5/6e4);
+  const t=dias>0?`${dias} d ${String(h).padStart(2,"0")} h`:h>0?`${h} h ${String(m).padStart(2,"0")} min`:`${m} min`;
+  return d>=0?`faltam ${t}`:`vencido há ${t}`;
+}
+function timerChip(p){
+  const a=alvoLembrete(p);
+  if(a==null) return `<span class="chip warn">Sem lembrete</span>`;
+  return `<span class="chip ${a<Date.now()?"bad":"acc"}" data-alvo="${a}" data-pre="Próximo pedido: ">Próximo pedido: ${tempoTxt(a)}</span>`;
+}
+function atualizaTimers(){
+  document.querySelectorAll("[data-alvo]").forEach(el=>{
+    const a=+el.dataset.alvo;if(!a)return;
+    const v=a<Date.now();
+    el.textContent=(el.dataset.pre||"")+tempoTxt(a);
+    el.classList.toggle("bad",v);el.classList.toggle("acc",!v);
+  });
+}
+setInterval(atualizaTimers,30000);
+function syncDrawerTimer(){
+  const el=$("#drawerTimer"),v=$("#f-lembrete")?.value;if(!el)return;
+  document.querySelectorAll("#datebox .dtile").forEach(b=>b.setAttribute("aria-pressed",String(!!v&&v===dataEmDias(+b.dataset.dias))));
+  if(!v){el.textContent="Sem data definida";el.removeAttribute("data-alvo");el.classList.remove("bad","acc");return}
+  el.dataset.alvo=new Date(v+"T09:00:00").getTime();el.dataset.pre="";atualizaTimers();
+}
+function renderStrip(){
+  const el=$("#strip");if(!el)return;
+  const L=lista().filter(p=>p.etapa==="feedback").sort((a,b)=>(alvoLembrete(a)??Infinity)-(alvoLembrete(b)??Infinity));
+  if(!L.length){el.hidden=true;el.innerHTML="";return}
+  const venc=L.filter(p=>{const a=alvoLembrete(p);return a!=null&&a<Date.now()}).length;
+  el.hidden=false;
+  el.innerHTML=`<span class="sh">Próximos pedidos</span>${venc?`<span class="chip bad">${venc} vencido${venc>1?"s":""}</span>`:""}`+
+    L.slice(0,8).map(p=>`<button class="it" data-open="${esc(p.id)}"><span class="g">G${esc(p.grupo||"–")}</span>${esc(p.cliente||"")}${timerChip(p)}</button>`).join("")+
+    (L.length>8?`<span class="note">+${L.length-8}</span>`:"");
+}
+function renderBell(){
+  const b=$("#bell");if(!b)return;
+  b.hidden=!S.podeComercial;
+  const n=[...S.alertas.values()].filter(a=>!a.lido).length, bd=$("#badge");
+  bd.hidden=!n;bd.textContent=n;
+}
+function abrirAlertas(){
+  const L=[...S.alertas].map(([id,a])=>({id,...a})).sort((a,b)=>(a.lido-b.lido)||(b.em-a.em)).slice(0,40);
+  $("#modal").innerHTML=`<div class="modal"><div class="scrim" data-closemodal></div><div class="mbox" role="dialog" aria-modal="true" aria-label="Alertas">
+    <header><h2>Alertas para o comercial</h2><button class="btn" data-closemodal>Fechar</button></header>
+    <div class="mbody"><div class="alist">${L.map(a=>`<div class="al${a.lido?"":" novo"}">
+      <div class="msg">${esc(a.msg)}</div>
+      <div class="note">${a.de==="comercial"?"Comercial":"Produção"} · G${esc(a.grupo||"–")} ${esc(a.cliente||"")} · ${new Date(a.em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}${a.lido?" · lida":""}</div>
+      <div class="acts">${S.pedidos.has(a.pedidoId)?`<button class="btn" data-openalert="${esc(a.pedidoId)}">Abrir pedido</button>`:""}${a.lido?"":`<button class="btn" data-readalert="${esc(a.id)}">Marcar como lida</button>`}</div></div>`).join("")||`<div class="empty">Nenhum alerta.</div>`}</div></div></div></div>`;
+}
+function abrirAlerta(id){
+  const p=S.pedidos.get(id);if(!p)return;
+  const a=alvoLembrete(p);
+  const msg=`Lembrete de próximo pedido: ${p.cliente||""} (grupo ${p.grupo||"–"}), ${p.produto||""}.${a?` ${tempoTxt(a)}.`:""}${p.feedback?`\nFeedback do cliente: ${p.feedback}`:""}`;
+  S.alertaDe=id;
+  $("#modal").innerHTML=`<div class="modal"><div class="scrim" data-closemodal></div><div class="mbox" role="dialog" aria-modal="true" aria-label="Alertar o comercial">
+    <header><h2>Alertar o comercial · G${esc(p.grupo||"–")}</h2><button class="btn" data-closemodal>Fechar</button></header>
+    <div class="mbody"><div class="f"><label for="al-msg">Mensagem</label><textarea id="al-msg" rows="5">${esc(msg)}</textarea></div>
+      <div id="al-status" class="status" hidden></div></div>
+    <div class="mfoot"><button class="btn primary" id="al-send">Enviar alerta</button><button class="btn" data-closemodal>Cancelar</button></div></div></div>`;
+}
+async function enviarAlerta(){
+  const id=S.alertaDe,p=S.pedidos.get(id),msg=($("#al-msg")?.value||"").trim();
+  if(!p||!msg){statusModal("Escreva a mensagem do alerta.","bad");return}
+  const b=$("#al-send");b.disabled=true;
+  try{
+    await S.store.set("alertas",S.store.newId(),{pedidoId:id,grupo:p.grupo||"",cliente:p.cliente||"",msg,de:S.perfil==="comercial"?"comercial":"producao",em:Date.now(),lido:false});
+    await S.store.update("pedidos",id,{alertaEm:Date.now()});S.pedidos.set(id,{...p,alertaEm:Date.now()});
+    statusModal("Alerta enviado ao comercial.","ok");render();
+  }catch(e){b.disabled=false;statusModal("Não foi possível enviar o alerta: "+esc(msgErro(e)),"bad")}
+}
+
+/* ---------- equipe (somente Comercial) ---------- */
+async function abrirEquipe(){
+  const {data,error}=await sb.from("perfis").select("id,email,nome,papel,ativo").order("email");
+  if(error){toast("Não foi possível carregar a equipe: "+msgErro(error));return}
+  $("#modal").innerHTML=`<div class="modal"><div class="scrim" data-closemodal></div><div class="mbox" role="dialog" aria-modal="true" aria-label="Equipe">
+    <header><h2>Equipe e acessos</h2><button class="btn" data-closemodal>Fechar</button></header>
+    <div class="mbody">
+      <p class="note">Para convidar uma pessoa nova: no painel do Supabase, Authentication, Users, Invite user. Quando ela aceitar, aparece aqui como “Somente leitura” e você ajusta o perfil.</p>
+      ${data.map(u=>`<div class="eq" data-perfil="${esc(u.id)}"><div><b>${esc(u.nome||u.email)}</b><div class="note">${esc(u.email)}${u.id===S.userId?" · você":""}</div></div>
+        <select class="eq-papel" aria-label="Perfil de ${esc(u.email)}" ${u.id===S.userId?"disabled":""}>${Object.entries(PAPEIS).map(([k,v])=>`<option value="${k}"${u.papel===k?" selected":""}>${v}</option>`).join("")}</select>
+        <label class="chk"><input type="checkbox" class="eq-ativo" ${u.ativo?"checked":""} ${u.id===S.userId?"disabled":""}> Ativo</label>
+        <button class="btn" data-salvarperfil="${esc(u.id)}" ${u.id===S.userId?"disabled":""}>Salvar</button></div>`).join("")}
+      <div id="eq-status" class="status" hidden></div>
+    </div></div></div>`;
+}
+async function salvarPerfil(id){
+  const row=document.querySelector(`.eq[data-perfil="${id}"]`);
+  const papel=row.querySelector(".eq-papel").value, ativo=row.querySelector(".eq-ativo").checked;
+  const s=$("#eq-status");
+  const {data,error}=await sb.from("perfis").update({papel,ativo}).eq("id",id).select("id");
+  s.hidden=false;
+  if(error||!data?.length){s.className="status bad";s.textContent="Não foi possível salvar: "+(error?msgErro(error):"sem permissão.");return}
+  s.className="status ok";s.textContent="Acesso atualizado.";
+}
+
+/* ---------- importação da planilha ---------- */
+function bindImport(){
+  const inp=$("#csv");if(!inp)return;
+  inp.onchange=async()=>{
+    const file=inp.files[0];if(!file)return;
+    const itens=mapearPlanilha(parseCSV(await file.text()));
+    const prev=$("#prev");
+    if(!itens.length){prev.textContent="Não encontrei pedidos nesse arquivo. Confira se é a aba PRODUÇÃO E GRUPOS.";return}
+    const cont=e=>itens.filter(i=>i.pedido.etapa===e).length;
+    prev.innerHTML=`<p><b>${itens.length} pedidos</b> encontrados: ${ETAPAS.map(e=>`${cont(e.id)} em ${e.nome.toLowerCase()}`).filter(t=>!t.startsWith("0")).join(", ")}.<br>
+      As etapas foram deduzidas do que a planilha já informa (pagamento, amostra, valores) e podem ser ajustadas depois.</p>
+      <button class="btn primary" id="go">Importar ${itens.length} pedidos</button>`;
+    $("#go").onclick=async()=>{
+      const go=$("#go");go.disabled=true;let n=0;
+      try{
+        for(const it of itens){
+          await S.store.set("pedidos",it.id,{...it.pedido,atualizado:Date.now()});
+          await S.store.set("financeiro",it.id,it.fin);
+          go.textContent=`Importando… ${++n}/${itens.length}`;
+        }
+        toast("Importação concluída.");
+      }catch(e){go.disabled=false;toast("Falha na importação após "+n+" pedidos: "+msgErro(e))}
+    };
+  };
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const ar=t.closest("[data-arq]");if(ar){e.preventDefault();abrirArquivo(ar.dataset.bucket,ar.dataset.path);return}
+  const adv=t.closest("[data-adv]");if(adv){e.stopPropagation();e.preventDefault();avancar(adv.dataset.adv);return}
+  const lem0=t.closest("[data-lem]");if(lem0){e.stopPropagation();e.preventDefault();definirRetorno(lem0.dataset.lem,+lem0.dataset.dias);return}
+  const al0=t.closest("[data-alert]");if(al0){e.stopPropagation();e.preventDefault();abrirAlerta(al0.dataset.alert);return}
+  const op=t.closest("[data-open]");if(op){abrir(op.dataset.open);return}
+  if(t.closest("[data-closemodal]")){fecharModal();return}
+  if(t.closest("[data-close]")){fechar();return}
+  const v=t.closest("#views button");if(v){S.view=v.dataset.v;render();return}
+  const r=t.closest("#roles button");if(r){S.perfil=r.dataset.r;render();return}
+  if(t.closest("#novo")){abrir(null);return}
+  if(t.closest("#sair")){sair();return}
+  if(t.closest("#equipe")){abrirEquipe();return}
+  if(t.closest("#salvar")){salvar();return}
+  if(t.closest("#excluir")){excluir();return}
+  if(t.closest("#abrirEmail")){abrirEmail();return}
+  if(t.closest("#em-copy")){acaoEmail("copiar");return}
+  if(t.closest("#em-gmail")){acaoEmail("gmail");return}
+  if(t.closest("#em-mailto")){acaoEmail("mailto");return}
+  const dt10=t.closest("#datebox .dtile");
+  if(dt10){const l=$("#f-lembrete");l.value=dataEmDias(+dt10.dataset.dias);syncDrawerTimer();return}
+  if(t.closest("#alertar")){abrirAlerta(S.aberto);return}
+  if(t.closest("#al-send")){enviarAlerta();return}
+  if(t.closest("#bell")){abrirAlertas();return}
+  if(t.closest("[data-minirm]")){removerMinirisco();return}
+  const sp=t.closest("[data-salvarperfil]");if(sp){salvarPerfil(sp.dataset.salvarperfil);return}
+  const oa=t.closest("[data-openalert]");if(oa){fecharModal();abrir(oa.dataset.openalert);return}
+  const ra=t.closest("[data-readalert]");
+  if(ra){const id=ra.dataset.readalert;S.store.update("alertas",id,{lido:true}).then(()=>{S.alertas.set(id,{...S.alertas.get(id),lido:true});renderBell();abrirAlertas()}).catch(()=>toast("Não foi possível marcar como lida."));return}
+  /* produtos e matriz */
+  const rerender=()=>{$("#itens").innerHTML=htmlItens();recalcFicha("matriz")};
+  if(t.closest("[data-additem]")){const it=normItem({});ITENS.push(it);PRECOS[it.id]={base:"",linhas:{}};rerender();[...document.querySelectorAll(".iprod")].pop()?.focus();return}
+  const ac=t.closest("[data-addcor]");
+  if(ac){ITENS[+ac.dataset.k].linhas.push({id:uid(),cor:"",q:{}});rerender();[...document.querySelectorAll(`.mcor[data-k="${ac.dataset.k}"]`)].pop()?.focus();return}
+  const at=t.closest("[data-addtam]");
+  if(at){
+    const k=+at.dataset.k,n=$("#novotam-"+k).value.trim().toUpperCase();
+    if(!n)return;
+    if(ITENS[k].tam.includes(n)){toast("Esse tamanho já existe neste produto.");return}
+    ITENS[k].tam.push(n);rerender();$("#novotam-"+k)?.focus();return
+  }
+  const dc=t.closest("[data-delcor]");
+  if(dc){const it=ITENS[+dc.dataset.k],i=+dc.dataset.i,l=it.linhas[i];
+    if(somaLinha(it,l)>0){toast("Zere as quantidades da cor antes de remover.");return}
+    it.linhas.splice(i,1);if(PRECOS[it.id])delete PRECOS[it.id].linhas[l.id];
+    if(!it.linhas.length)it.linhas.push({id:uid(),cor:"",q:{}});rerender();return}
+  const dtm=t.closest("[data-deltam]");
+  if(dtm){const it=ITENS[+dtm.dataset.k],j=+dtm.dataset.j,nome=it.tam[j];
+    if(somaCol(it,nome)>0){toast("Zere as quantidades do tamanho antes de remover.");return}
+    it.tam.splice(j,1);it.linhas.forEach(l=>delete l.q[nome]);rerender();return}
+  const di=t.closest("[data-delitem]");
+  if(di){const k=+di.dataset.k,it=ITENS[k];
+    if(somaItem(it)>0){toast("Zere as quantidades do produto antes de remover.");return}
+    ITENS.splice(k,1);delete PRECOS[it.id];rerender()}
+});
+document.addEventListener("change",e=>{
+  if(e.target.id==="f-etapa"&&e.target.value==="feedback"){const l=$("#f-lembrete");if(l&&!l.value){l.value=lembreteInicial();syncDrawerTimer()}}
+  if(e.target.id==="comp"){const f=e.target.files[0];e.target.value="";anexarComprovante(f)}
+  if(e.target.id==="mini"){const f=e.target.files[0];e.target.value="";anexarMinirisco(f)}
+});
+document.addEventListener("input",e=>{
+  const t=e.target,cl=t.classList;
+  if(cl?.contains("cust")){recalcCustos();return}
+  if(cl?.contains("iprod")){ITENS[+t.dataset.k].produto=t.value;return}
+  if(cl?.contains("itec")){ITENS[+t.dataset.k].tecido=t.value;return}
+  if(cl?.contains("mcor")){ITENS[+t.dataset.k].linhas[+t.dataset.i].cor=t.value;return}
+  if(cl?.contains("ibase")){const it=ITENS[+t.dataset.k];(PRECOS[it.id]=PRECOS[it.id]||{base:"",linhas:{}}).base=t.value;recalcFicha("preco");return}
+  if(cl?.contains("mpr")){const it=ITENS[+t.dataset.k],l=it.linhas[+t.dataset.i];(PRECOS[it.id]=PRECOS[it.id]||{base:"",linhas:{}}).linhas[l.id]=t.value;recalcFicha("preco");return}
+  if(cl?.contains("mq")){
+    const it=ITENS[+t.dataset.k],l=it.linhas[+t.dataset.i],tam=it.tam[+t.dataset.j];
+    const v=parseInt(t.value.replace(/\D/g,""),10)||0;
+    if(v) l.q[tam]=v; else delete l.q[tam];
+    recalcFicha("matriz");return
+  }
+  if(t.id==="f-valorTotal") recalcFicha("total");
+  else if(t.id==="f-qtde") recalcFicha("qtde");
+  else if(t.id==="f-cnpj") t.value=mascaraCnpj(t.value);
+  else if(t.id==="f-lembrete") syncDrawerTimer();
+  if(t.closest?.("#modal")) atualizaPreviaEmail();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){if($("#modal").firstChild)fecharModal();else if($("#overlay").firstChild)fechar()}
+  const ativa=e.key==="Enter"||e.key===" ";
+  if(ativa&&e.target.matches?.("[data-adv]")){e.preventDefault();avancar(e.target.dataset.adv)}
+  if(ativa&&e.target.matches?.("[data-lem]")){e.preventDefault();definirRetorno(e.target.dataset.lem,+e.target.dataset.dias)}
+  if(ativa&&e.target.matches?.("[data-alert]")){e.preventDefault();abrirAlerta(e.target.dataset.alert)}
+});
+$("#q").addEventListener("input",e=>{S.q=e.target.value;render()});
+
+/* ---------- login e inicialização ---------- */
+function mostrarAuth(html){
+  $("#appwrap").hidden=true;
+  const a=$("#auth");a.hidden=false;
+  a.innerHTML=`<div class="auth">${html}</div>`;
+}
+const cabecalhoAuth=`<h1>Pedidos<small>Marconi Confecção</small></h1>`;
+function mostrarLogin(msg,cls){
+  mostrarAuth(`${cabecalhoAuth}
+    <form id="fLogin" class="auth" style="border:0;padding:0;box-shadow:none;background:none" autocomplete="on">
+      <div class="f"><label for="lg-email">E-mail</label><input id="lg-email" type="email" autocomplete="username" required></div>
+      <div class="f"><label for="lg-senha">Senha</label><input id="lg-senha" type="password" autocomplete="current-password" required></div>
+      <div class="${cls||"erro"}" id="lg-msg" role="status">${esc(msg||"")}</div>
+      <button class="btn primary" type="submit" id="lg-ok">Entrar</button>
+      <button class="linkbtn" type="button" id="lg-esqueci">Esqueci minha senha</button>
+    </form>`);
+  $("#lg-email").focus();
+}
+function mostrarSenha(){
+  mostrarAuth(`${cabecalhoAuth}<p>Defina a sua senha de acesso.</p>
+    <form id="fSenha" class="auth" style="border:0;padding:0;box-shadow:none;background:none">
+      <div class="f"><label for="ns-1">Nova senha (mínimo 8 caracteres)</label><input id="ns-1" type="password" autocomplete="new-password" minlength="8" required></div>
+      <div class="f"><label for="ns-2">Repita a senha</label><input id="ns-2" type="password" autocomplete="new-password" minlength="8" required></div>
+      <div class="erro" id="ns-msg" role="status"></div>
+      <button class="btn primary" type="submit">Salvar senha e entrar</button>
+    </form>`);
+  $("#ns-1").focus();
+}
+document.addEventListener("submit",async e=>{
+  const id=e.target.id;
+  if(id!=="fLogin"&&id!=="fSenha") return;
+  e.preventDefault();
+  if(id==="fLogin"){
+    const b=$("#lg-ok"),m=$("#lg-msg");b.disabled=true;m.className="erro";m.textContent="";
+    const {error}=await sb.auth.signInWithPassword({email:$("#lg-email").value.trim(),password:$("#lg-senha").value});
+    if(error){b.disabled=false;m.textContent=/invalid/i.test(error.message)?"E-mail ou senha incorretos.":msgErro(error);return}
+    boot();
+  }else{
+    const a=$("#ns-1").value,b=$("#ns-2").value,m=$("#ns-msg");
+    if(a.length<8){m.textContent="A senha precisa de pelo menos 8 caracteres.";return}
+    if(a!==b){m.textContent="As senhas não são iguais.";return}
+    const {error}=await sb.auth.updateUser({password:a});
+    if(error){m.textContent=msgErro(error);return}
+    modoSenha=false;history.replaceState(null,"",location.pathname);boot();
+  }
+});
+document.addEventListener("click",async e=>{
+  if(e.target.id==="lg-esqueci"){
+    const em=$("#lg-email").value.trim(),m=$("#lg-msg");
+    if(!emailOk(em)){m.className="erro";m.textContent="Digite o seu e-mail acima e clique de novo.";return}
+    const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});
+    m.className=error?"erro":"ok";m.textContent=error?msgErro(error):"Enviamos um link para redefinir a senha. Confira o seu e-mail.";
+  }
+  if(e.target.id==="sair2") sair();
+});
+async function sair(){try{await sb.auth.signOut()}catch(e){}location.reload()}
+
+async function boot(){
+  if(!CFG.SUPABASE_URL||/COLE/i.test(CFG.SUPABASE_URL)||!window.supabase){
+    mostrarAuth(`${cabecalhoAuth}<p>O sistema ainda não foi configurado. Preencha o arquivo <b>config.js</b> com os dados do Supabase.</p>`);return;
+  }
+  if(!sb){
+    sb=window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    sb.auth.onAuthStateChange(ev=>{if(ev==="PASSWORD_RECOVERY"){modoSenha=true;mostrarSenha()}});
+  }
+  let sessao=null;
+  try{sessao=(await sb.auth.getSession()).data.session}catch(e){}
+  if(!sessao){mostrarLogin();return}
+  if(modoSenha){mostrarSenha();return}
+  S.userId=sessao.user.id;S.email=sessao.user.email||"";
+  const {data:pf,error}=await sb.from("perfis").select("papel,ativo,nome").eq("id",S.userId).maybeSingle();
+  if(error){mostrarAuth(`${cabecalhoAuth}<p class="erro">Não foi possível carregar o seu acesso: ${esc(msgErro(error))}</p><button class="btn" id="sair2">Sair</button>`);return}
+  if(!pf||!pf.ativo){mostrarAuth(`${cabecalhoAuth}<p>Seu acesso ainda não foi liberado. Peça ao Comercial para ativar o seu usuário (${esc(S.email)}).</p><button class="btn" id="sair2">Sair</button>`);return}
+  S.papel=pf.papel;
+  iniciarApp();
+}
+let appIniciado=false;
+function iniciarApp(){
+  if(appIniciado) return;
+  appIniciado=true;
+  S.store=supaStore(sb);
+  S.podeComercial=S.papel==="comercial";
+  S.podeEditar=S.papel!=="leitura";
+  S.perfil=S.podeComercial?"comercial":"producao";
+  $("#auth").hidden=true;$("#auth").innerHTML="";
+  $("#appwrap").hidden=false;
+  $("#roles").hidden=!S.podeComercial;
+  $("#equipe").hidden=!S.podeComercial;
+  render();
+  S.store.subscribe("pedidos",m=>{S.pedidos=m;S.carregado=true;if(!$("#overlay").firstChild)render()},e=>{S.carregado=true;toast("Falha ao carregar os pedidos: "+msgErro(e));render()});
+  if(S.podeComercial) S.store.subscribe("financeiro",m=>{S.fin=m;if(!$("#overlay").firstChild)render()});
+  if(S.podeEditar){
+    S.store.subscribe("alertas",m=>{S.alertas=m;renderBell()});
+    S.store.subscribe("custos",m=>{S.custos=m;if(!$("#overlay").firstChild)render()});
+  }
+}
+boot();
+</script>
+</body>
+</html>
