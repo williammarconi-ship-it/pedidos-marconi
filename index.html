@@ -572,6 +572,7 @@ function lista(){
 }
 function chipsDe(p){
   const f=finDe(p.id),c=[];
+  if(p.origem==="site-corta-vento") c.push(`<span class="chip acc">Veio do site</span>`);
   if(p.etapa==="feedback") c.push(timerChip(p));
   if(p.etapa==="producao"&&verCustos()){const ct=custoDe(S.custos.get(p.id));c.push(ct>0?`<span class="chip">Custos ${money(ct)}</span>`:`<span class="chip warn">Sem custos lançados</span>`)}
   if(p.etapa!=="cotacao"&&emAndamento(p)){
@@ -801,7 +802,8 @@ function abrir(id){
         ${!novo?`<input type="file" id="comp" accept="image/*,application/pdf" aria-label="Anexar comprovante">`:`<span class="hint">Salve o pedido antes de anexar o comprovante.</span>`}</div>
       <div class="sec">Cliente para emissão da NF-e</div>
       ${campo("razao","Razão social",f.razao??"",{full:1})}
-      ${campo("cnpj","CNPJ",f.cnpj??"",{hint:"Obrigatório para criar o e-mail e emitir a NF-e"})}${campo("emailCliente","E-mail do cliente",f.emailCliente??"",{t:"email"})}`:""}
+      ${campo("cnpj","CNPJ",f.cnpj??"",{hint:"Obrigatório para criar o e-mail e emitir a NF-e"})}${campo("emailCliente","E-mail do cliente",f.emailCliente??"",{t:"email"})}
+      ${campo("telefone","Telefone / WhatsApp",f.telefone??"",{full:1})}`:""}
       <div class="sec">Amostra e piloto</div>
       ${campo("amostra","Status da amostra",p.amostra??"",{sel:AMOSTRA})}${campo("pilotoProd","Produção do piloto",p.pilotoProd??"")}
       ${campo("endereco","Endereço para envio da amostra",p.endereco??"",{full:1})}${campo("pilotoAprov","Aprovação do piloto",p.pilotoAprov??"",{full:1})}
@@ -863,7 +865,7 @@ async function salvar(opt={}){
       });
       const vt=soma>0?calc.total:parseBR(g("valorTotal"));
       const f={precos,preco:precos[itens[0].id].base,valorTotal:vt,entrada:entradaDe(vt),precoTxt:g("precoTxt")||"",pago:parseBR(g("pago"))||0,
-        pagamentoTxt:g("pagamentoTxt")||"",razao:g("razao")||"",cnpj:cnpj||"",emailCliente:mail||""};
+        pagamentoTxt:g("pagamentoTxt")||"",razao:g("razao")||"",cnpj:cnpj||"",emailCliente:mail||"",telefone:g("telefone")||""};
       if(S.fin.has(id)) await S.store.update("financeiro",id,f); else await S.store.set("financeiro",id,f);
       S.fin.set(id,{...(S.fin.get(id)||{}),...f});
     }
@@ -1096,7 +1098,7 @@ function abrirAlertas(){
     <header><h2>Alertas para o comercial</h2><button class="btn" data-closemodal>Fechar</button></header>
     <div class="mbody"><div class="alist">${L.map(a=>`<div class="al${a.lido?"":" novo"}">
       <div class="msg">${esc(a.msg)}</div>
-      <div class="note">${a.de==="comercial"?"Comercial":"Produção"} · G${esc(a.grupo||"–")} ${esc(a.cliente||"")} · ${new Date(a.em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}${a.lido?" · lida":""}</div>
+      <div class="note">${a.de==="site"?"Site":(a.de==="comercial"?"Comercial":"Produção")} · ${a.grupo?"G"+esc(a.grupo)+" ":""} ${esc(a.cliente||"")} · ${new Date(a.em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}${a.lido?" · lida":""}</div>
       <div class="acts">${S.pedidos.has(a.pedidoId)?`<button class="btn" data-openalert="${esc(a.pedidoId)}">Abrir pedido</button>`:""}${a.lido?"":`<button class="btn" data-readalert="${esc(a.id)}">Marcar como lida</button>`}</div></div>`).join("")||`<div class="empty">Nenhum alerta.</div>`}</div></div></div></div>`;
 }
 function abrirAlerta(id){
